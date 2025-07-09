@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "../ui/separator";
+import { ScrollArea } from "../ui/scroll-area";
 
 interface AdvancedSettingsDialogProps {
   isOpen: boolean;
@@ -60,90 +61,105 @@ export default function AdvancedSettingsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Intégration Power BI</DialogTitle>
+          <DialogTitle>Configurer le flux de données Power BI</DialogTitle>
           <DialogDescription>
-            Connectez vos données d'appel à Microsoft Power BI pour créer des
-            tableaux de bord personnalisés.
+            Suivez ces étapes pour connecter vos données à Microsoft Power BI.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 text-sm text-muted-foreground">
-          <p>
-            Suivez ces étapes pour commencer en moins de 5 minutes. Pour un guide
-            plus détaillé, consultez notre{" "}
-            <a href="#" className="underline text-primary">
-              didacticiel complet
-            </a>
-            .
-          </p>
-          <div className="p-4 space-y-3 border rounded-md bg-muted/50">
-            <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center w-6 h-6 font-bold rounded-full bg-primary text-primary-foreground shrink-0">
-                1
-              </div>
+        <ScrollArea className="max-h-[60vh] pr-6">
+          <div className="space-y-4 text-sm text-muted-foreground">
+            <p>
+              Grâce à Power BI de Microsoft, vos données prennent vie et vous
+              donnent la capacité d'analyser en profondeur vos données en
+              tenant compte de vos besoins particuliers.
+            </p>
+
+            <div className="p-4 space-y-3 border rounded-md bg-muted/50">
+              <h3 className="font-semibold text-foreground">
+                Étape 1: Accéder à votre espace de travail
+              </h3>
               <p>
-                Inscrivez-vous à Power BI. Ne vous inquiétez pas, l'inscription
-                est gratuite !
+                Connectez-vous à Power BI. Si c'est votre première fois, cliquez sur le bouton de menu en haut à gauche et sélectionnez « Mon espace de travail ».
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center w-6 h-6 font-bold rounded-full bg-primary text-primary-foreground shrink-0">
-                2
-              </div>
+
+            <div className="p-4 space-y-3 border rounded-md bg-muted/50">
+              <h3 className="font-semibold text-foreground">
+                Étape 2: Créer un jeu de données en continu
+              </h3>
               <p>
-                Choisissez « Nouveau flux de données » et ajoutez une nouvelle
-                sélection.
+                Dans le coin supérieur droit, cliquez sur « + Créer », puis sélectionnez « Jeu de données en continu ».
+              </p>
+              <p>
+                Choisissez « API » comme source de données et cliquez sur « Suivant ».
               </p>
             </div>
-            <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center w-6 h-6 font-bold rounded-full bg-primary text-primary-foreground shrink-0">
-                3
-              </div>
+
+            <div className="p-4 space-y-3 border rounded-md bg-muted/50">
+              <h3 className="font-semibold text-foreground">
+                Étape 3: Configurer votre flux de données
+              </h3>
+              <ul className="space-y-2 list-disc list-inside">
+                <li>
+                  Donnez un nom à votre jeu de données (par exemple, "Statistiques Centre d'Appel").
+                </li>
+                <li>
+                  Activez l'option « Analyse des données historiques ».
+                </li>
+                <li>
+                  Ajoutez tous les champs requis comme indiqué dans le didacticiel (un lien sera fourni ici).
+                </li>
+              </ul>
               <p>
-                Ajoutez tous les champs requis comme indiqué dans le
-                didacticiel.
+                Une fois tous les champs saisis, cliquez sur « Créer ». Power BI vous fournira une « URL de transmission (Push URL) ».
               </p>
             </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+                <h3 className="font-semibold text-foreground">
+                    Étape 4: Connecter l'application
+                </h3>
+                <p>
+                    Copiez l'« URL de transmission (Push URL) » de Power BI et collez-la dans le champ ci-dessous.
+                </p>
+            </div>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          placeholder="Collez ici l'URL du flux de données Power BI"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Alert variant="default" className="bg-muted/50">
+                  <AlertDescription className="text-xs text-muted-foreground">
+                    La finalisation de la synchronisation des anciennes données
+                    pourrait prendre du temps.
+                  </AlertDescription>
+                </Alert>
+                <DialogFooter>
+                  <Button type="submit" disabled={!form.formState.isValid}>
+                    Enregistrer l'URL
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </div>
-
-          <Separator />
-
-          <p className="font-semibold text-foreground">
-            Étape 4 : Connectez Power BI à cette application
-          </p>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input
-                        placeholder="Collez ici l'URL du flux de données Power BI"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <Alert variant="default" className="bg-muted/50">
-                <AlertDescription className="text-xs text-muted-foreground">
-                  La finalisation de la synchronisation des anciennes données
-                  pourrait prendre du temps.
-                </AlertDescription>
-              </Alert>
-              <DialogFooter>
-                <Button type="submit" disabled={!form.formState.isValid}>
-                  Enregistrer l'URL
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );
