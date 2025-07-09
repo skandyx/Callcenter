@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { type CallData } from "@/lib/types";
-import { mockCallData } from "@/lib/mock-data";
 
 import MetricsDashboard from "@/components/dashboard/metrics-dashboard";
 import AiSummary from "@/components/dashboard/ai-summary";
@@ -15,11 +14,44 @@ export default function MainDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      setCallData(mockCallData);
-      setIsLoading(false);
-    }, 1000);
+    async function fetchData() {
+      try {
+        const response = await fetch("/api/call-data");
+        if (!response.body) return;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let receivedData = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            setIsLoading(false);
+            break;
+          }
+          receivedData += decoder.decode(value, { stream: true });
+
+          // Traiter les objets JSON complets reçus
+          const jsonObjects = receivedData.split("\n");
+          receivedData = jsonObjects.pop() || ""; // Garder la partie incomplète pour la prochaine itération
+
+          for (const jsonObj of jsonObjects) {
+            if (jsonObj) {
+              try {
+                const parsedChunk = JSON.parse(jsonObj);
+                setCallData((prevData) => [...prevData, ...parsedChunk]);
+              } catch (error) {
+                console.error("Error parsing JSON chunk:", error);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching data stream:", error);
+        setIsLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
   return (
@@ -30,7 +62,7 @@ export default function MainDashboard() {
         </h1>
       </header>
       <main className="flex-1 p-4 md:p-8 lg:p-10">
-        {isLoading ? (
+        {isLoading && callData.length === 0 ? (
           <DashboardSkeleton />
         ) : (
           <div className="flex flex-col gap-8">
