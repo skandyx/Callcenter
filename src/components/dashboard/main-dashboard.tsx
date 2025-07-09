@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { type CallData } from "@/lib/types";
 
 import MetricsDashboard from "@/components/dashboard/metrics-dashboard";
@@ -14,22 +14,55 @@ import AdvancedSettingsDialog from "./advanced-settings-dialog";
 import { cn } from "@/lib/utils";
 import RawDataInput from "./raw-data-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MainDashboard() {
   const [callData, setCallData] = useState<CallData[]>([]);
-  const [isLoading, setIsLoading] = useState(false); // Set to false initially
+  const [isLoading, setIsLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dataReceived, setDataReceived] = useState(false);
+  const { toast } = useToast();
+
+  const fetchCallData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/call-data');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const data: CallData[] = await response.json();
+      setCallData(data);
+      if (data.length > 0) {
+        setDataReceived(true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch call data:", error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Could not fetch real-time data from the server.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    // This effect now only watches for changes in callData
-    if (callData.length > 0 && !dataReceived) {
-      setDataReceived(true);
-    }
-  }, [callData, dataReceived]);
+    // Fetch initial data
+    fetchCallData();
 
-  const handleDataUpdate = (newData: CallData[]) => {
+    // Poll for new data every 3 seconds
+    const intervalId = setInterval(fetchCallData, 3000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [fetchCallData]);
+
+
+  const handleDataUpdateFromInput = (newData: CallData[]) => {
     setCallData(newData);
+     if (newData.length > 0) {
+        setDataReceived(true);
+      }
   };
 
   return (
@@ -62,10 +95,10 @@ export default function MainDashboard() {
         <Tabs defaultValue="dashboard">
           <TabsList className="mb-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="data_input">Raw Data Input</TabsTrigger>
+            <TabsTrigger value="data_input">Manual Data Input</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard">
-            {isLoading ? (
+            {isLoading && callData.length === 0 ? (
               <DashboardSkeleton />
             ) : (
               <div className="flex flex-col gap-8">
@@ -79,7 +112,7 @@ export default function MainDashboard() {
             )}
           </TabsContent>
           <TabsContent value="data_input">
-            <RawDataInput onDataUpdate={handleDataUpdate} />
+            <RawDataInput onDataUpdate={handleDataUpdateFromInput} />
           </TabsContent>
         </Tabs>
       </main>

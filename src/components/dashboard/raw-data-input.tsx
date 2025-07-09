@@ -52,7 +52,6 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
       if (!Array.isArray(parsedData)) {
         throw new Error("Input data must be a JSON array.");
       }
-      // You might want to add more validation here based on CallData type
       onDataUpdate(parsedData);
       toast({
         title: "Success!",
@@ -70,10 +69,11 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Raw Data Input</CardTitle>
+        <CardTitle>Manual Data Input</CardTitle>
         <CardDescription>
-          Paste your call data as a JSON array below to populate the dashboard.
-          This is a reliable way to test the UI with your specific data.
+          Paste your call data as a JSON array below to update the dashboard.
+          This is useful for testing the UI with specific data structures.
+          Note: The dashboard also polls for new data automatically.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
