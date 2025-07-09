@@ -20,6 +20,9 @@ export default function MainDashboard() {
   const [dataReceived, setDataReceived] = useState(false);
 
   useEffect(() => {
+    // Initial fetch
+    fetchData();
+
     // This effect will run every 2 seconds to fetch the latest data.
     const interval = setInterval(() => {
       fetchData();
@@ -31,7 +34,6 @@ export default function MainDashboard() {
   useEffect(() => {
     if (callData.length > 0 && !dataReceived) {
       setDataReceived(true);
-      setIsLoading(false);
     }
   }, [callData, dataReceived]);
 
@@ -45,7 +47,12 @@ export default function MainDashboard() {
       setCallData(data);
     } catch (error) {
       console.error("Error fetching data:", error);
-      // Don't set loading to false on error, so we can keep trying
+      // We might want to show an error state to the user
+    } finally {
+        // We set loading to false after the first fetch attempt
+        if (isLoading) {
+            setIsLoading(false);
+        }
     }
   }
 
@@ -74,7 +81,7 @@ export default function MainDashboard() {
         </div>
       </header>
       <main className="flex-1 p-4 md:p-8 lg:p-10">
-        {isLoading && callData.length === 0 ? (
+        {isLoading ? (
           <DashboardSkeleton />
         ) : (
           <div className="flex flex-col gap-8">
