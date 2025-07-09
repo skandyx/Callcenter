@@ -34,6 +34,12 @@ const urlItems: UrlItem[] = [
     description: "Un enregistrement par appel.",
     path: "/api/stream",
   },
+   {
+    id: "advanced-calls",
+    label: "Données d'appel avancées",
+    description: "Plusieurs enregistrements possibles par appel (transferts, tentatives, etc.).",
+    path: "/api/stream/advanced-calls",
+  },
   {
     id: "agent-status",
     label: "Disponibilité des agents et connexions",
