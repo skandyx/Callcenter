@@ -20,50 +20,34 @@ export default function MainDashboard() {
   const [dataReceived, setDataReceived] = useState(false);
 
   useEffect(() => {
+    // This effect will run every 2 seconds to fetch the latest data.
+    const interval = setInterval(() => {
+      fetchData();
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, []);
+
+  useEffect(() => {
     if (callData.length > 0 && !dataReceived) {
       setDataReceived(true);
+      setIsLoading(false);
     }
   }, [callData, dataReceived]);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch("/api/call-data");
-        if (!response.body) return;
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let receivedData = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            setIsLoading(false);
-            break;
-          }
-          receivedData += decoder.decode(value, { stream: true });
-
-          const jsonObjects = receivedData.split("\n");
-          receivedData = jsonObjects.pop() || ""; 
-
-          for (const jsonObj of jsonObjects) {
-            if (jsonObj) {
-              try {
-                const parsedChunk = JSON.parse(jsonObj);
-                setCallData((prevData) => [...prevData, ...parsedChunk]);
-              } catch (error) {
-                console.error("Error parsing JSON chunk:", error);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching data stream:", error);
-        setIsLoading(false);
+  async function fetchData() {
+    try {
+      const response = await fetch("/api/call-data");
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
+      const data = await response.json();
+      setCallData(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      // Don't set loading to false on error, so we can keep trying
     }
-    fetchData();
-  }, []);
+  }
 
   return (
     <div className="flex flex-col min-h-screen dark bg-background text-foreground">
