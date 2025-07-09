@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/card";
 import { type CallData } from "@/lib/types";
 import {
+  ChartContainer,
   ChartTooltipContent,
-  ChartTooltip,
   type ChartConfig,
 } from "@/components/ui/chart";
 
@@ -28,8 +28,8 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
   const chartData = useMemo(() => {
     const statusCounts: { [key: string]: number } = {};
     data.forEach((call) => {
-      statusCounts[call.status_detail] =
-        (statusCounts[call.status_detail] || 0) + 1;
+      const detail = call.status_detail || "N/A";
+      statusCounts[detail] = (statusCounts[detail] || 0) + 1;
     });
 
     return Object.entries(statusCounts)
@@ -54,24 +54,30 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
       </CardHeader>
       <CardContent>
         <div className="w-full h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-              <XAxis type="number" />
-              <YAxis
-                dataKey="name"
-                type="category"
-                width={150}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip
-                cursor={{ fill: "hsl(var(--muted))" }}
-                content={<ChartTooltipContent />}
-              />
-              <Bar dataKey="count" fill="hsl(var(--primary))" radius={4} />
-            </BarChart>
-          </ResponsiveContainer>
+          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ left: 20 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" />
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  width={150}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted))" }}
+                  content={<ChartTooltipContent />}
+                />
+                <Bar dataKey="count" fill="var(--color-count)" radius={4} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </CardContent>
     </Card>
