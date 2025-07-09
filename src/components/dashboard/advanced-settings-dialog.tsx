@@ -21,7 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "../ui/separator";
 import { ScrollArea } from "../ui/scroll-area";
@@ -121,10 +121,10 @@ export default function AdvancedSettingsDialog({
 
             <div className="space-y-2">
                 <h3 className="font-semibold text-foreground">
-                    Étape 4: Connecter l'application
+                    Étape 4: Connecter cette application à Power BI
                 </h3>
                 <p>
-                    Copiez l'« URL de transmission (Push URL) » de Power BI et collez-la dans le champ ci-dessous.
+                    Copiez l'« URL de transmission (Push URL) » que Power BI vient de vous donner et collez-la dans le champ ci-dessous.
                 </p>
             </div>
 
@@ -137,7 +137,7 @@ export default function AdvancedSettingsDialog({
                     <FormItem>
                       <FormControl>
                         <Input
-                          placeholder="Collez ici l'URL du flux de données Power BI"
+                          placeholder="Collez ici l'URL de transmission de Power BI"
                           {...field}
                         />
                       </FormControl>
