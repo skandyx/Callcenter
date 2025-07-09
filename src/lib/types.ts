@@ -26,3 +26,50 @@ export type CallData = {
   agent_number: string | null;
   parent_call_id: string | null;
 };
+
+export type AgentStatusData = {
+  hour: number;
+  loggedIn: number;
+  loggedOut: number;
+  idle: number;
+  date: string;
+  queuename: string;
+  user_id: string;
+  user: string;
+  email: string;
+  queue_id: string;
+};
+
+export type ProfileAvailabilityData = {
+  hour: number;
+  Available: number;
+  Lunch: number;
+  Meeting: number;
+  "Left for the day": number;
+  P4: number;
+  P5: number;
+  P6: number;
+  P7: number;
+  P8: number;
+  P9: number;
+  P10: number;
+  P11: number;
+  P12: number;
+  P13: number;
+  P14: number;
+  P15: number;
+  P16: number;
+  P17: number;
+  P18: number;
+  P19: number;
+  P20: number;
+  P21: number;
+  P22: number;
+  P23: number;
+  P24: number;
+  OTHER: number;
+  date: string;
+  user: string;
+  user_id: string;
+  email: string;
+};
