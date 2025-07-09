@@ -31,7 +31,8 @@ export default function MainDashboard() {
       }
       const data: CallData[] = await response.json();
       setCallData(data);
-      if (data.length > 0) {
+      // If we just received data, mark it as received.
+      if (data.length > callData.length) {
         setDataReceived(true);
       }
     } catch (error) {
@@ -44,19 +45,14 @@ export default function MainDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, callData.length]);
+
 
   useEffect(() => {
-    // Fetch initial data
     fetchCallData();
-
-    // Poll for new data every 3 seconds
     const intervalId = setInterval(fetchCallData, 3000);
-
-    // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
   }, [fetchCallData]);
-
 
   const handleDataUpdateFromInput = (newData: CallData[]) => {
     setCallData(newData);
