@@ -4,6 +4,8 @@ import path from "path";
 
 const simplifiedDataPath = path.join(process.cwd(), "call-data.json");
 const advancedDataPath = path.join(process.cwd(), "advanced-call-data.json");
+const agentStatusDataPath = path.join(process.cwd(), "agent-status-data.json");
+
 
 async function clearFile(filePath: string): Promise<void> {
     try {
@@ -25,6 +27,7 @@ export async function POST() {
     try {
         await clearFile(simplifiedDataPath);
         await clearFile(advancedDataPath);
+        await clearFile(agentStatusDataPath);
 
         return NextResponse.json(
             { message: "Toutes les données d'appel ont été effacées avec succès." },

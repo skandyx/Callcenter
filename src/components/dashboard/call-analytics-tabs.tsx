@@ -3,6 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CallLog from "./call-log";
 import StatusDetailsChart from "./status-details-chart";
+import AgentStatusLog from "./agent-status-log";
 import { type CallData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
@@ -13,9 +14,10 @@ interface CallAnalyticsTabsProps {
 export default function CallAnalyticsTabs({ data }: CallAnalyticsTabsProps) {
   return (
     <Tabs defaultValue="log">
-      <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
+      <TabsList className="grid w-full grid-cols-4 md:w-[800px]">
         <TabsTrigger value="log">Call Log</TabsTrigger>
         <TabsTrigger value="status">Status Details</TabsTrigger>
+        <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
         <TabsTrigger value="advanced">Advanced</TabsTrigger>
       </TabsList>
       <TabsContent value="log">
@@ -23,6 +25,9 @@ export default function CallAnalyticsTabs({ data }: CallAnalyticsTabsProps) {
       </TabsContent>
       <TabsContent value="status">
         <StatusDetailsChart data={data} />
+      </TabsContent>
+       <TabsContent value="agent-status">
+        <AgentStatusLog />
       </TabsContent>
       <TabsContent value="advanced">
         <Card>

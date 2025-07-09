@@ -23,7 +23,7 @@ export default function MainDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dataReceived, setDataReceived] = useState(false);
-  const [isAiEnabled, setIsAiEnabled] = useState(true);
+  const [isAiEnabled, setIsAiEnabled] = useState(false);
   const { toast } = useToast();
 
   const fetchCallData = useCallback(async () => {
@@ -37,7 +37,7 @@ export default function MainDashboard() {
       // Check if new data has actually been received
       if (JSON.stringify(data) !== JSON.stringify(callData)) {
         setCallData(data);
-        if (data.length > 0) {
+        if (data.length > 0 && !dataReceived) {
           setDataReceived(true);
         }
       }
@@ -52,7 +52,7 @@ export default function MainDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, callData]);
+  }, [toast, callData, dataReceived]);
 
 
   useEffect(() => {
