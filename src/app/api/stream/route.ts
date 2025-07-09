@@ -12,11 +12,12 @@ async function readData(): Promise<CallData[]> {
     return JSON.parse(fileContent);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-      // File doesn't exist, return empty array
+      // File doesn't exist, which is fine. Return an empty array.
       return [];
     }
-    // For other errors, re-throw
-    throw error;
+    // For other errors, log them and return an empty array.
+    console.error("Error reading data file:", error);
+    return [];
   }
 }
 
@@ -26,22 +27,25 @@ async function writeData(data: CallData[]): Promise<void> {
 
 export async function POST(request: Request) {
   try {
-    const newData: CallData = await request.json();
+    const newData: CallData | CallData[] = await request.json();
+    console.log("Données reçues du PBX via /api/stream:", newData);
 
     // Read existing data
     const allData = await readData();
 
     // Add the received data to our store
-    allData.push(newData);
+    if (Array.isArray(newData)) {
+      allData.push(...newData);
+    } else {
+      allData.push(newData);
+    }
 
     // Write updated data back to the file
     await writeData(allData);
 
 
-    console.log("Données reçues du PBX via /api/stream:", newData);
-
     return NextResponse.json(
-      { message: "Données reçues et traitées avec succès." },
+      { message: "Données reçues et traitées avec succès.", data: allData },
       { status: 200 }
     );
   } catch (error)

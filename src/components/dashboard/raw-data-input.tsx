@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { type CallData } from "@/lib/types";
+import { Loader2 } from "lucide-react";
 
 interface RawDataInputProps {
   onDataUpdate: (data: CallData[]) => void;
@@ -44,10 +45,11 @@ const exampleData = [
 
 export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
   const [jsonInput, setJsonInput] = useState(JSON.stringify(exampleData, null, 2));
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = () => {
-    try {
+  const handleJsonUpdate = () => {
+     try {
       const parsedData = JSON.parse(jsonInput);
       if (!Array.isArray(parsedData)) {
         throw new Error("Input data must be a JSON array.");
@@ -55,7 +57,7 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
       onDataUpdate(parsedData);
       toast({
         title: "Success!",
-        description: "Dashboard has been updated with the new data.",
+        description: "Dashboard has been updated with the pasted data.",
       });
     } catch (error: any) {
       toast({
@@ -63,6 +65,46 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
         title: "Invalid JSON",
         description: error.message || "Please check the format of your data.",
       });
+    }
+  }
+
+  const handleSubmitToServer = async () => {
+    setIsSubmitting(true);
+    try {
+      const parsedData = JSON.parse(jsonInput);
+       if (!Array.isArray(parsedData)) {
+        throw new Error("Input data must be a JSON array.");
+      }
+
+      const response = await fetch('/api/stream', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(parsedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit data to server.');
+      }
+      
+      const result = await response.json();
+      onDataUpdate(result.data); // Update dashboard with the full data from server
+
+      toast({
+        title: "Data Submitted!",
+        description: "Your data has been sent to the server and the dashboard is updated.",
+      });
+
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Submission Error",
+        description: error.message || "Please check the format of your data and try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -72,8 +114,7 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
         <CardTitle>Manual Data Input</CardTitle>
         <CardDescription>
           Paste your call data as a JSON array below to update the dashboard.
-          This is useful for testing the UI with specific data structures.
-          Note: The dashboard also polls for new data automatically.
+          You can update the preview directly, or submit the data to the server to test the full `curl` flow.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -84,7 +125,13 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
           className="font-mono text-xs"
           placeholder="Paste your JSON array here..."
         />
-        <Button onClick={handleSubmit}>Update Dashboard</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleJsonUpdate}>Update Dashboard Preview</Button>
+          <Button onClick={handleSubmitToServer} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Submit to Server (Simulate Curl)
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
