@@ -30,7 +30,25 @@ Follow these steps to deploy and run the application in a production environment
 - Access to the server via SSH.
 - Your project files copied to the server (e.g., using `git clone` or `scp`).
 
-### 1. Install Dependencies
+### 1. Create Environment File
+
+**This is a crucial step for the AI features to work.**
+
+In the root directory of your project on the VPS, create a file named `.env`:
+
+```bash
+nano .env
+```
+
+Add your Google AI API key to this file:
+
+```
+GOOGLE_API_KEY=VOTRE_CLÉ_API_ICI
+```
+
+Replace `VOTRE_CLÉ_API_ICI` with your actual API key. Save and close the file.
+
+### 2. Install Dependencies
 
 Navigate to your project directory on the VPS and install the required packages:
 
@@ -38,7 +56,7 @@ Navigate to your project directory on the VPS and install the required packages:
 npm install
 ```
 
-### 2. Build the Application
+### 3. Build the Application
 
 Create a production-ready build of your Next.js application:
 
@@ -48,7 +66,7 @@ npm run build
 
 This will compile the application and optimize it for performance.
 
-### 3. Run the Production Server
+### 4. Run the Production Server
 
 Start the application using the Next.js production server:
 
@@ -58,7 +76,7 @@ npm start
 
 By default, the application will run on port 3000. You should now be able to access it via `http://<your_vps_ip>:3000`.
 
-### 4. (Recommended) Use a Process Manager
+### 5. (Recommended) Use a Process Manager
 
 For a production environment, it's highly recommended to use a process manager like `pm2` to keep your application running continuously.
 
@@ -76,7 +94,7 @@ pm2 logs call-center-app
 pm2 stop call-center-app
 ```
 
-### 5. Configure Your PBX
+### 6. Configure Your PBX
 
 Once the application is running, configure your PBX to send data streams to the following endpoints:
 
