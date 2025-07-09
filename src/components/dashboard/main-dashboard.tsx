@@ -12,49 +12,25 @@ import { Button } from "../ui/button";
 import { Settings } from "lucide-react";
 import AdvancedSettingsDialog from "./advanced-settings-dialog";
 import { cn } from "@/lib/utils";
+import RawDataInput from "./raw-data-input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 export default function MainDashboard() {
   const [callData, setCallData] = useState<CallData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Set to false initially
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dataReceived, setDataReceived] = useState(false);
 
   useEffect(() => {
-    // Initial fetch
-    fetchData();
-
-    // This effect will run every 2 seconds to fetch the latest data.
-    const interval = setInterval(() => {
-      fetchData();
-    }, 2000); // Poll every 2 seconds
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
-
-  useEffect(() => {
+    // This effect now only watches for changes in callData
     if (callData.length > 0 && !dataReceived) {
       setDataReceived(true);
     }
   }, [callData, dataReceived]);
 
-  async function fetchData() {
-    try {
-      const response = await fetch("/api/call-data");
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-      const data = await response.json();
-      setCallData(data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      // We might want to show an error state to the user
-    } finally {
-        // We set loading to false after the first fetch attempt
-        if (isLoading) {
-            setIsLoading(false);
-        }
-    }
-  }
+  const handleDataUpdate = (newData: CallData[]) => {
+    setCallData(newData);
+  };
 
   return (
     <div className="flex flex-col min-h-screen dark bg-background text-foreground">
@@ -63,36 +39,49 @@ export default function MainDashboard() {
           Call Center Analytics
         </h1>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "h-3 w-3 rounded-full animate-pulse",
-                dataReceived ? "bg-green-500" : "bg-red-500"
-              )}
-            ></span>
-            <span className="text-sm text-muted-foreground">
-              {dataReceived ? "Receiving Data" : "No Data"}
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "h-3 w-3 rounded-full animate-pulse",
+                  dataReceived ? "bg-green-500" : "bg-red-500"
+                )}
+              ></span>
+              <span className="text-sm text-muted-foreground">
+                {dataReceived ? "Receiving Data" : "No Data"}
+              </span>
+            </div>
+            <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
+              <Settings className="w-5 h-5" />
+              <span className="sr-only">Settings</span>
+            </Button>
           </div>
-          <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="w-5 h-5" />
-            <span className="sr-only">Settings</span>
-          </Button>
         </div>
       </header>
       <main className="flex-1 p-4 md:p-8 lg:p-10">
-        {isLoading ? (
-          <DashboardSkeleton />
-        ) : (
-          <div className="flex flex-col gap-8">
-            <MetricsDashboard data={callData} />
-            <div className="grid gap-8 lg:grid-cols-2">
-              <AiSummary data={callData} />
-              <AnomalyDetector data={callData} />
-            </div>
-            <CallAnalyticsTabs data={callData} />
-          </div>
-        )}
+        <Tabs defaultValue="dashboard">
+          <TabsList className="mb-4">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="data_input">Raw Data Input</TabsTrigger>
+          </TabsList>
+          <TabsContent value="dashboard">
+            {isLoading ? (
+              <DashboardSkeleton />
+            ) : (
+              <div className="flex flex-col gap-8">
+                <MetricsDashboard data={callData} />
+                <div className="grid gap-8 lg:grid-cols-2">
+                  <AiSummary data={callData} />
+                  <AnomalyDetector data={callData} />
+                </div>
+                <CallAnalyticsTabs data={callData} />
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="data_input">
+            <RawDataInput onDataUpdate={handleDataUpdate} />
+          </TabsContent>
+        </Tabs>
       </main>
       <AdvancedSettingsDialog
         isOpen={isSettingsOpen}
