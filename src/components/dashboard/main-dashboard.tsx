@@ -11,11 +11,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "../ui/button";
 import { Settings } from "lucide-react";
 import AdvancedSettingsDialog from "./advanced-settings-dialog";
+import { cn } from "@/lib/utils";
 
 export default function MainDashboard() {
   const [callData, setCallData] = useState<CallData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [dataReceived, setDataReceived] = useState(false);
+
+  useEffect(() => {
+    if (callData.length > 0 && !dataReceived) {
+      setDataReceived(true);
+    }
+  }, [callData, dataReceived]);
 
   useEffect(() => {
     async function fetchData() {
@@ -35,9 +43,8 @@ export default function MainDashboard() {
           }
           receivedData += decoder.decode(value, { stream: true });
 
-          // Traiter les objets JSON complets reçus
           const jsonObjects = receivedData.split("\n");
-          receivedData = jsonObjects.pop() || ""; // Garder la partie incomplète pour la prochaine itération
+          receivedData = jsonObjects.pop() || ""; 
 
           for (const jsonObj of jsonObjects) {
             if (jsonObj) {
@@ -64,10 +71,23 @@ export default function MainDashboard() {
         <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
           Call Center Analytics
         </h1>
-        <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
-          <Settings className="w-5 h-5" />
-          <span className="sr-only">Settings</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "h-3 w-3 rounded-full animate-pulse",
+                dataReceived ? "bg-green-500" : "bg-red-500"
+              )}
+            ></span>
+            <span className="text-sm text-muted-foreground">
+              {dataReceived ? "Receiving Data" : "No Data"}
+            </span>
+          </div>
+          <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
+            <Settings className="w-5 h-5" />
+            <span className="sr-only">Settings</span>
+          </Button>
+        </div>
       </header>
       <main className="flex-1 p-4 md:p-8 lg:p-10">
         {isLoading && callData.length === 0 ? (
