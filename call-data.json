@@ -1,0 +1,30 @@
+[
+  {
+    "enter_datetime": "2024-07-31T15:30:00Z",
+    "enter_hour": 15,
+    "enter_year": 2024,
+    "enter_month": 202407,
+    "time_in_queue_seconds": 25,
+    "processing_time_seconds": 180,
+    "less_than_30s_waittime": 1,
+    "less_than_60s_waittime": 1,
+    "less_than_120s_waittime": 1,
+    "version": 4,
+    "call_id": "call-abc-123-xyz",
+    "queue_name": "Support Technique",
+    "enter_date": "2024-07-31",
+    "enter_time": "15:30:00",
+    "enter_weekday": "3 Mercredi",
+    "calling_number": "+33123456789",
+    "calling_forward": null,
+    "agent": "Alice Martin",
+    "status": "Completed",
+    "status_detail": "Completed by answers",
+    "calling_name": "Société Dupont",
+    "enter_week": "202431",
+    "internal_call": "No",
+    "agent_id": "agent-789",
+    "agent_number": "202",
+    "parent_call_id": null
+  }
+]

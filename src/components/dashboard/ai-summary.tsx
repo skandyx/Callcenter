@@ -10,9 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AiSummaryProps {
   data: CallData[];
+  dataLength: number;
 }
 
-export default function AiSummary({ data }: AiSummaryProps) {
+export default function AiSummary({ data, dataLength }: AiSummaryProps) {
   const [summary, setSummary] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -40,8 +41,11 @@ export default function AiSummary({ data }: AiSummaryProps) {
 
     if (data.length > 0) {
       getSummary();
+    } else {
+      setSummary("No data available to generate a summary.");
+      setIsLoading(false);
     }
-  }, [data, toast]);
+  }, [dataLength, toast]);
 
   return (
     <Card className="h-full">

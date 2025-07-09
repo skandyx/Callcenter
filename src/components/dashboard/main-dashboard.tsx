@@ -104,8 +104,8 @@ export default function MainDashboard() {
               <div className="flex flex-col gap-8">
                 <MetricsDashboard data={callData} />
                 <div className="grid gap-8 lg:grid-cols-2">
-                  <AiSummary data={callData} />
-                  <AnomalyDetector data={callData} />
+                  <AiSummary data={callData} dataLength={callData.length} />
+                  <AnomalyDetector data={callData} dataLength={callData.length} />
                 </div>
                 <CallAnalyticsTabs data={callData} />
               </div>

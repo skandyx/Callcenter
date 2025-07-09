@@ -10,9 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface AnomalyDetectorProps {
   data: CallData[];
+  dataLength: number;
 }
 
-export default function AnomalyDetector({ data }: AnomalyDetectorProps) {
+export default function AnomalyDetector({ data, dataLength }: AnomalyDetectorProps) {
   const [anomalies, setAnomalies] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -40,8 +41,11 @@ export default function AnomalyDetector({ data }: AnomalyDetectorProps) {
 
     if (data.length > 0) {
       getAnomalies();
+    } else {
+        setAnomalies("No data available to detect anomalies.")
+        setIsLoading(false);
     }
-  }, [data, toast]);
+  }, [dataLength, toast]);
 
   return (
     <Card className="h-full">
