@@ -8,10 +8,14 @@ import AiSummary from "@/components/dashboard/ai-summary";
 import AnomalyDetector from "@/components/dashboard/anomaly-detector";
 import CallAnalyticsTabs from "@/components/dashboard/call-analytics-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "../ui/button";
+import { Settings } from "lucide-react";
+import AdvancedSettingsDialog from "./advanced-settings-dialog";
 
 export default function MainDashboard() {
   const [callData, setCallData] = useState<CallData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -56,10 +60,14 @@ export default function MainDashboard() {
 
   return (
     <div className="flex flex-col min-h-screen dark bg-background text-foreground">
-      <header className="sticky top-0 z-10 flex items-center h-16 px-4 border-b shrink-0 bg-background/80 backdrop-blur-sm md:px-6">
+      <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 border-b shrink-0 bg-background/80 backdrop-blur-sm md:px-6">
         <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
           Call Center Analytics
         </h1>
+        <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
+          <Settings className="w-5 h-5" />
+          <span className="sr-only">Settings</span>
+        </Button>
       </header>
       <main className="flex-1 p-4 md:p-8 lg:p-10">
         {isLoading && callData.length === 0 ? (
@@ -75,6 +83,10 @@ export default function MainDashboard() {
           </div>
         )}
       </main>
+      <AdvancedSettingsDialog
+        isOpen={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+      />
     </div>
   );
 }
