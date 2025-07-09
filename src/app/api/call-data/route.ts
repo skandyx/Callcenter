@@ -1,8 +1,27 @@
 import { NextResponse } from "next/server";
-import { callDataStore } from "@/lib/call-data-store";
+import { type CallData } from "@/lib/types";
+import fs from "fs/promises";
+import path from "path";
+
+// Define the path to the data file
+const dataFilePath = path.join(process.cwd(), "call-data.json");
+
+async function readData(): Promise<CallData[]> {
+  try {
+    const fileContent = await fs.readFile(dataFilePath, "utf8");
+    return JSON.parse(fileContent);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      // File doesn't exist, which is fine. Return an empty array.
+      return [];
+    }
+    // For other errors, log them and return an empty array.
+    console.error("Error reading data file:", error);
+    return [];
+  }
+}
 
 export async function GET() {
-  // This endpoint now returns the data that has been pushed to the /api/stream endpoint.
-  // Note: For a real production app, this in-memory store would be replaced by a database.
-  return NextResponse.json(callDataStore);
+  const data = await readData();
+  return NextResponse.json(data);
 }

@@ -1,16 +1,44 @@
 import { NextResponse } from "next/server";
-import { callDataStore } from "@/lib/call-data-store";
 import { type CallData } from "@/lib/types";
+import fs from "fs/promises";
+import path from "path";
+
+// Define the path to the data file
+const dataFilePath = path.join(process.cwd(), "call-data.json");
+
+async function readData(): Promise<CallData[]> {
+  try {
+    const fileContent = await fs.readFile(dataFilePath, "utf8");
+    return JSON.parse(fileContent);
+  } catch (error: any) {
+    if (error.code === 'ENOENT') {
+      // File doesn't exist, return empty array
+      return [];
+    }
+    // For other errors, re-throw
+    throw error;
+  }
+}
+
+async function writeData(data: CallData[]): Promise<void> {
+  await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
+}
 
 export async function POST(request: Request) {
   try {
-    const data: CallData = await request.json();
+    const newData: CallData = await request.json();
 
-    // Add the received data to our in-memory store.
-    // In a real app, you'd push this to a database or a real-time service.
-    callDataStore.push(data);
+    // Read existing data
+    const allData = await readData();
 
-    console.log("Données reçues du PBX via /api/stream:", data);
+    // Add the received data to our store
+    allData.push(newData);
+
+    // Write updated data back to the file
+    await writeData(allData);
+
+
+    console.log("Données reçues du PBX via /api/stream:", newData);
 
     return NextResponse.json(
       { message: "Données reçues et traitées avec succès." },
