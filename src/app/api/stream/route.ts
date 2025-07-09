@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     // In a real app, you'd push this to a database or a real-time service.
     callDataStore.push(data);
 
-    console.log("Données reçues du PBX et ajoutées au store:", data);
+    console.log("Données reçues du PBX via /api/stream:", data);
 
     return NextResponse.json(
       { message: "Données reçues et traitées avec succès." },
