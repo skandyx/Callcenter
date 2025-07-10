@@ -44,7 +44,7 @@ export default function CallAnalyticsTabs({ callData, advancedCallData, agentSta
         <WorldMapChart data={callData} />
       </TabsContent>
       <TabsContent value="queue-ivr">
-        <QueueIvrLog data={queueIvrData} />
+        <QueueIvrLog data={queueIvrData} callData={callData} />
       </TabsContent>
     </Tabs>
   );

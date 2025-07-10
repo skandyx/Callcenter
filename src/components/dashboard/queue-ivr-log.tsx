@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import { useState, useMemo } from "react";
-import { type QueueIvrData } from "@/lib/types";
+import { type QueueIvrData, type CallData } from "@/lib/types";
 import {
   Table,
   TableBody,
@@ -23,34 +23,46 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, PhoneOff, Keyboard, CheckCircle, PhoneCall, History } from "lucide-react";
+import KpiCard from "./kpi-card";
+
 
 const ROWS_PER_PAGE = 10;
 
 interface QueueIvrLogProps {
   data: QueueIvrData[];
+  callData: CallData[];
 }
 
-export default function QueueIvrLog({ data }: QueueIvrLogProps) {
+export default function QueueIvrLog({ data, callData }: QueueIvrLogProps) {
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredData = useMemo(() => {
-    if (!data) return [];
-    
-    const sortedData = [...data].sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
+  const { kpis, filteredData } = useMemo(() => {
+    const sortedData = data ? [...data].sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()) : [];
 
-    if (!filter) {
-      return sortedData;
-    }
-    
     const lowercasedFilter = filter.toLowerCase();
+    const finalFilteredData = filter 
+      ? sortedData.filter(item => Object.values(item).some(value => value && value.toString().toLowerCase().includes(lowercasedFilter)))
+      : sortedData;
 
-    return sortedData.filter(
-      (item) => Object.values(item).some(value => 
-        value && value.toString().toLowerCase().includes(lowercasedFilter)
-      )
-    );
+    // Calculate KPIs from the full dataset (before filtering)
+    const uniqueCallIdsInIvr = new Set(data.map(d => d.call_id));
+    const totalEvents = data.length;
+    const keyPressEvents = data.filter(d => d.event_type === 'KeyPress').length;
+    const connectedCalls = data.filter(d => d.event_type === 'ExitIVR').length;
+    const hangupCalls = data.filter(d => d.event_type === 'Hangup').length;
+    const uniqueCalls = uniqueCallIdsInIvr.size;
+
+    const kpiMetrics = {
+        totalEvents,
+        uniqueCalls,
+        keyPressEvents,
+        connectedCalls,
+        hangupCalls
+    };
+
+    return { kpis: kpiMetrics, filteredData: finalFilteredData };
   }, [data, filter]);
 
   const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
@@ -100,6 +112,16 @@ export default function QueueIvrLog({ data }: QueueIvrLogProps) {
         <CardDescription>
           Tracez le parcours de l'appelant à travers les menus vocaux interactifs et les files d'attente.
         </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+            <KpiCard title="Total Events" value={kpis.totalEvents.toLocaleString()} Icon={History} description="Total logs from IVR" />
+            <KpiCard title="Unique Calls" value={kpis.uniqueCalls.toLocaleString()} Icon={PhoneCall} description="Distinct calls in IVR" />
+            <KpiCard title="User Interactions" value={kpis.keyPressEvents.toLocaleString()} Icon={Keyboard} description="Total key presses" />
+            <KpiCard title="Connected Calls" value={kpis.connectedCalls.toLocaleString()} Icon={CheckCircle} description="Calls exited to agent" />
+            <KpiCard title="IVR Hangups" value={kpis.hangupCalls.toLocaleString()} Icon={PhoneOff} description="Calls hung up in IVR" />
+        </div>
+
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input
             placeholder="Filter by Call ID, number, event..."
@@ -111,8 +133,7 @@ export default function QueueIvrLog({ data }: QueueIvrLogProps) {
             className="max-w-sm"
           />
         </div>
-      </CardHeader>
-      <CardContent>
+        
         <div className="border rounded-md">
           <Table>
             <TableHeader>
