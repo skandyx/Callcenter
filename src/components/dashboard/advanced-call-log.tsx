@@ -201,6 +201,10 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                 {paginatedData.length > 0 ? (
                   paginatedData.map((item, index) => {
                     const parentCall = findParent(item.parent_call_id);
+                    // If this is a parent call that has children, its status should be considered "Completed"
+                    // as the agent successfully completed their action (transferring).
+                    const displayStatus = (!item.isChild && item.hasChildren) ? "Completed" : item.status;
+
                     return (
                     <TableRow 
                       key={`${item.call_id}-${index}`}
@@ -241,7 +245,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                       <TableCell className="align-top">{item.queue_name || "Direct call"}</TableCell>
                       <TableCell className="align-top">{item.agent || "N/A"}</TableCell>
                       <TableCell className="align-top">
-                        <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
+                        <Badge variant={getStatusVariant(displayStatus)}>{displayStatus}</Badge>
                       </TableCell>
                       <TableCell className="align-top">{item.status_detail}</TableCell>
                       <TableCell className="align-top">{item.processing_time_seconds ?? 0}s</TableCell>
