@@ -33,12 +33,22 @@ export async function POST(request: Request) {
     // Read existing data
     const allData = await readData();
 
+    const dataToProcess = Array.isArray(newData) ? newData : [newData];
+
+    // Logic to propagate parent_call_id for transfers
+    dataToProcess.forEach(call => {
+      if (call.parent_call_id) {
+        const parentCall = allData.find(c => c.call_id === call.parent_call_id) || dataToProcess.find(c => c.call_id === call.parent_call_id);
+        // If the direct parent has a parent, use the original parent_call_id
+        if (parentCall && parentCall.parent_call_id) {
+          call.parent_call_id = parentCall.parent_call_id;
+        }
+      }
+    });
+
     // Add the received data to our store
-    if (Array.isArray(newData)) {
-      allData.push(...newData);
-    } else {
-      allData.push(newData);
-    }
+    allData.push(...dataToProcess);
+
 
     // Write updated data back to the file
     await writeData(allData);
