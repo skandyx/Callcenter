@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { type CallData, type AdvancedCallData, type AgentStatusData, type QueueIvrData } from "@/lib/types";
 import { format } from "date-fns";
+import Link from 'next/link';
 
 import MetricsDashboard from "@/components/dashboard/metrics-dashboard";
 import AiSummary from "@/components/dashboard/ai-summary";
@@ -11,7 +12,7 @@ import AnomalyDetector from "@/components/dashboard/anomaly-detector";
 import CallAnalyticsTabs from "@/components/dashboard/call-analytics-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "../ui/button";
-import { Calendar as CalendarIcon, Settings } from "lucide-react";
+import { Calendar as CalendarIcon, Settings, Tv } from "lucide-react";
 import AdvancedSettingsDialog from "./advanced-settings-dialog";
 import { cn } from "@/lib/utils";
 import RawDataInput from "./raw-data-input";
@@ -30,7 +31,7 @@ export default function MainDashboard() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [dataReceived, setDataReceived] = useState(false);
+  const [isDataFetchingEnabled, setIsDataFetchingEnabled] = useState(true);
   const [isAiEnabled, setIsAiEnabled] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const { toast } = useToast();
@@ -42,7 +43,6 @@ export default function MainDashboard() {
       const data: CallData[] = await response.json();
       if (JSON.stringify(data) !== JSON.stringify(allCallData)) {
         setAllCallData(data);
-        if (data.length > 0) setDataReceived(true);
       }
     } catch (error) {
       console.error("Failed to fetch call data:", error);
@@ -104,16 +104,22 @@ export default function MainDashboard() {
   }, [fetchCallData, fetchAdvancedCallData, fetchAgentStatusData, fetchQueueIvrData]);
   
   useEffect(() => {
-    fetchAllData();
-    const intervalId = setInterval(fetchAllData, 3000);
-    return () => clearInterval(intervalId);
-  }, [fetchAllData]);
+    fetchAllData(); // Fetch initial data
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (isDataFetchingEnabled) {
+        intervalId = setInterval(fetchAllData, 3000);
+    }
+    
+    return () => {
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+    };
+  }, [isDataFetchingEnabled, fetchAllData]);
 
   const handleDataUpdateFromInput = (newData: CallData[]) => {
     setAllCallData(newData);
-     if (newData.length > 0) {
-        setDataReceived(true);
-      }
   };
 
   const filteredCallData = useMemo(() => {
@@ -148,6 +154,15 @@ export default function MainDashboard() {
           Call Center Analytics
         </h1>
         <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Label htmlFor="fetching-switch" className="text-sm text-muted-foreground">Receiving Data</Label>
+            <Switch
+              id="fetching-switch"
+              checked={isDataFetchingEnabled}
+              onCheckedChange={setIsDataFetchingEnabled}
+              aria-label="Toggle real-time data fetching"
+            />
+          </div>
           <div className="flex items-center gap-2">
             <Label htmlFor="ai-switch" className="text-sm text-muted-foreground">IA</Label>
             <Switch
@@ -184,17 +199,11 @@ export default function MainDashboard() {
                </Button>
             </PopoverContent>
           </Popover>
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "h-3 w-3 rounded-full",
-                dataReceived ? "bg-green-500 animate-pulse" : "bg-red-500"
-              )}
-            ></span>
-            <span className="text-sm text-muted-foreground">
-              {dataReceived ? "Receiving Data" : "No Data"}
-            </span>
-          </div>
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/wallboard" aria-label="Open Wallboard">
+              <Tv className="w-5 h-5" />
+            </Link>
+          </Button>
           <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
             <Settings className="w-5 h-5" />
             <span className="sr-only">Settings</span>
