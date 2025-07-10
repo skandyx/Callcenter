@@ -1,0 +1,39 @@
+
+[
+  {
+    "hour": 15,
+    "loggedIn": 60,
+    "loggedOut": 0,
+    "idle": 5,
+    "date": "2025-07-10",
+    "queuename": "Ventes",
+    "user_id": "1f5742da",
+    "user": "Luffy Monkey D",
+    "email": "luffy@example.com",
+    "queue_id": "q-ventes"
+  },
+  {
+    "hour": 15,
+    "loggedIn": 55,
+    "loggedOut": 0,
+    "idle": 10,
+    "date": "2025-07-10",
+    "queuename": "Ventes",
+    "user_id": "28921613",
+    "user": "Alex 777",
+    "email": "alex@example.com",
+    "queue_id": "q-ventes"
+  },
+  {
+    "hour": 15,
+    "loggedIn": 60,
+    "loggedOut": 0,
+    "idle": 2,
+    "date": "2025-07-10",
+    "queuename": "Support",
+    "user_id": "deadbeef",
+    "user": "Zoro Roronoa",
+    "email": "zoro@example.com",
+    "queue_id": "q-support"
+  }
+]
