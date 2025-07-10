@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -66,6 +67,12 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
       default: return "secondary";
     }
   };
+
+  const getParentCallTooltip = (parentCallId: string) => {
+    const parentCall = data.find(call => call.call_id === parentCallId);
+    const originalCaller = parentCall ? parentCall.calling_number : 'Inconnu';
+    return `Transfert de : ${originalCaller} (ID: ${parentCallId})`;
+  }
 
   if (!data) {
       return (
@@ -138,7 +145,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                                 <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Transfert de : {item.parent_call_id}</p>
+                                <p>{getParentCallTooltip(item.parent_call_id)}</p>
                               </TooltipContent>
                             </Tooltip>
                           )}
