@@ -108,7 +108,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                   <TableHead>Agent</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Status Detail</TableHead>
-                  <TableHead>Transfer</TableHead>
+                  <TableHead>Call ID</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,7 +122,19 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                         {new Date(item.enter_datetime).toLocaleTimeString()}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {item.calling_number}
+                        <div className="flex items-center gap-2">
+                          <span>{item.calling_number}</span>
+                          {item.parent_call_id && (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Transferred from: {item.parent_call_id}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>{item.queue_name || "N/A"}</TableCell>
                       <TableCell>{item.agent || "N/A"}</TableCell>
@@ -130,17 +142,8 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                         <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
                       </TableCell>
                       <TableCell>{item.status_detail}</TableCell>
-                      <TableCell>
-                        {item.parent_call_id && (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Transferred from: {item.parent_call_id}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {item.call_id}
                       </TableCell>
                     </TableRow>
                   ))
