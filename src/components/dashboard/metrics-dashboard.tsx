@@ -19,29 +19,35 @@ export default function MetricsDashboard({ data }: MetricsDashboardProps) {
     const avgQueueTime =
       totalCalls > 0 ? (totalQueueTime / totalCalls).toFixed(1) : "0";
 
-    const calculateServiceLevel = (seconds: 10 | 30 | 60 | 120) => {
-      // A more robust way to check for wait time, works even if `less_than_...` fields are not in the data
+    const calculateServiceLevel = (seconds: 10 | 30) => {
       const relevantCalls = data.filter(call => call.time_in_queue_seconds != null && call.status !== 'Abandoned');
-      if (relevantCalls.length === 0) return 0;
+      const total = relevantCalls.length;
+      if (total === 0) return { percentage: 0, count: 0, total: 0 };
 
-      const withinThreshold = relevantCalls.filter(
+      const count = relevantCalls.filter(
         (call) => call.time_in_queue_seconds! <= seconds
       ).length;
-      return (withinThreshold / relevantCalls.length) * 100;
+      
+      const percentage = (count / total) * 100;
+      return { percentage, count, total };
     };
     
     const sl10 = calculateServiceLevel(10);
     const sl30 = calculateServiceLevel(30);
 
+    const answeredCount = answeredCalls.length;
+    const answeredTotal = data.filter(call => call.status === "Completed" || call.status === "Abandoned").length;
+
     return {
       totalCalls,
       avgQueueTime,
-      serviceLevel10: sl10.toFixed(1),
-      serviceLevel30: sl30.toFixed(1),
-      answeredPercentage:
-        totalCalls > 0
-          ? ((answeredCalls.length / totalCalls) * 100).toFixed(1)
-          : "0",
+      serviceLevel10: sl10,
+      serviceLevel30: sl30,
+      answeredRate: {
+        percentage: totalCalls > 0 ? (answeredCount / answeredTotal) * 100 : 0,
+        count: answeredCount,
+        total: answeredTotal,
+      },
     };
   }, [data]);
 
@@ -61,21 +67,21 @@ export default function MetricsDashboard({ data }: MetricsDashboardProps) {
       />
       <KpiCard
         title="Service Level (<10s)"
-        value={`${stats.serviceLevel10}%`}
+        value={`${stats.serviceLevel10.percentage.toFixed(1)}%`}
         Icon={Zap}
-        description="Calls answered within 10 seconds"
+        description={`${stats.serviceLevel10.count}/${stats.serviceLevel10.total} calls answered in time`}
       />
       <KpiCard
         title="Service Level (<30s)"
-        value={`${stats.serviceLevel30}%`}
+        value={`${stats.serviceLevel30.percentage.toFixed(1)}%`}
         Icon={ShieldCheck}
-        description="Calls answered within 30 seconds"
+        description={`${stats.serviceLevel30.count}/${stats.serviceLevel30.total} calls answered in time`}
       />
       <KpiCard
         title="Answer Rate"
-        value={`${stats.answeredPercentage}%`}
+        value={`${stats.answeredRate.percentage.toFixed(1)}%`}
         Icon={Percent}
-        description="Percentage of calls answered"
+        description={`${stats.answeredRate.count}/${stats.answeredRate.total} of calls answered`}
       />
     </div>
   );
