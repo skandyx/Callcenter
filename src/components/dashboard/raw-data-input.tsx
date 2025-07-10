@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -13,34 +14,61 @@ interface RawDataInputProps {
 }
 
 const exampleData = [
-  {
-    "enter_datetime": "2024-07-31T15:30:00Z",
-    "enter_hour": 15,
-    "enter_year": 2024,
-    "enter_month": 202407,
-    "time_in_queue_seconds": 25,
-    "processing_time_seconds": 180,
-    "less_than_30s_waittime": 1,
-    "less_than_60s_waittime": 1,
-    "less_than_120s_waittime": 1,
-    "version": 4,
-    "call_id": "call-abc-123-xyz",
-    "queue_name": "Support Technique",
-    "enter_date": "2024-07-31",
-    "enter_time": "15:30:00",
-    "enter_weekday": "3 Mercredi",
-    "calling_number": "+33123456789",
-    "calling_forward": null,
-    "agent": "Alice Martin",
-    "status": "Completed",
-    "status_detail": "Completed by answers",
-    "calling_name": "Société Dupont",
-    "enter_week": "202431",
-    "internal_call": "No",
-    "agent_id": "agent-789",
-    "agent_number": "202",
-    "parent_call_id": null
-  }
+    {
+        "enter_datetime": "2025-07-10T16:00:00Z",
+        "enter_hour": 16, "enter_year": 2025, "enter_month": 202507,
+        "time_in_queue_seconds": null, "processing_time_seconds": 120,
+        "less_than_30s_waittime": null, "version": 5, "call_id": "outgoing-tunisia-1",
+        "queue_name": null, "enter_date": "2025-07-10", "enter_time": "16:00:00",
+        "enter_weekday": "4.Thursday", "calling_number": "+21671123456",
+        "agent": "Zoro Roronoa", "status": "Completed", "status_detail": "Outgoing",
+        "calling_name": "Client Tunisie", "enter_week": "202528", "internal_call": "No",
+        "agent_id": "deadbeef", "agent_number": "003228829677", "parent_call_id": null
+    },
+    {
+        "enter_datetime": "2025-07-10T16:02:00Z",
+        "enter_hour": 16, "enter_year": 2025, "enter_month": 202507,
+        "time_in_queue_seconds": null, "processing_time_seconds": 90,
+        "less_than_30s_waittime": null, "version": 5, "call_id": "outgoing-germany-1",
+        "queue_name": null, "enter_date": "2025-07-10", "enter_time": "16:02:00",
+        "enter_weekday": "4.Thursday", "calling_number": "+493012345678",
+        "agent": "Zoro Roronoa", "status": "Completed", "status_detail": "Outgoing",
+        "calling_name": "Client Allemagne", "enter_week": "202528", "internal_call": "No",
+        "agent_id": "deadbeef", "agent_number": "003228829677", "parent_call_id": null
+    },
+    {
+        "enter_datetime": "2025-07-10T16:05:00Z",
+        "enter_hour": 16, "enter_year": 2025, "enter_month": 202507,
+        "time_in_queue_seconds": null, "processing_time_seconds": 180,
+        "less_than_30s_waittime": null, "version": 5, "call_id": "outgoing-canada-1",
+        "queue_name": null, "enter_date": "2025-07-10", "enter_time": "16:05:00",
+        "enter_weekday": "4.Thursday", "calling_number": "+15141234567",
+        "agent": "Luffy Monkey D", "status": "Completed", "status_detail": "Outgoing",
+        "calling_name": "Client Canada", "enter_week": "202528", "internal_call": "No",
+        "agent_id": "1f5742da", "agent_number": "003228829631", "parent_call_id": null
+    },
+    {
+        "enter_datetime": "2025-07-10T16:10:00Z",
+        "enter_hour": 16, "enter_year": 2025, "enter_month": 202507,
+        "time_in_queue_seconds": null, "processing_time_seconds": 240,
+        "less_than_30s_waittime": null, "version": 5, "call_id": "outgoing-china-1",
+        "queue_name": null, "enter_date": "2025-07-10", "enter_time": "16:10:00",
+        "enter_weekday": "4.Thursday", "calling_number": "+861012345678",
+        "agent": "Luffy Monkey D", "status": "Completed", "status_detail": "Outgoing",
+        "calling_name": "Client Chine", "enter_week": "202528", "internal_call": "No",
+        "agent_id": "1f5742da", "agent_number": "003228829631", "parent_call_id": null
+    },
+    {
+        "enter_datetime": "2025-07-10T15:05:00.123Z",
+        "enter_hour": 15, "enter_year": 2025, "enter_month": "202507",
+        "time_in_queue_seconds": 15, "processing_time_seconds": 120,
+        "less_than_30s_waittime": 1, "version": 5, "call_id": "f2a4b1c9-1e3d-4c5f-8a9b-0d1e2f3a4b5c",
+        "queue_name": "Support", "enter_date": "2025-07-10", "enter_time": "15:05:00",
+        "enter_weekday": "4.Thursday", "calling_number": "+33123456789",
+        "agent": "Zoro Roronoa", "status": "Completed", "status_detail": "Incoming",
+        "calling_name": "Client France", "enter_week": "202528", "internal_call": "No",
+        "agent_id": "deadbeef", "agent_number": "003228829677", "parent_call_id": null
+    }
 ];
 
 export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
@@ -76,25 +104,23 @@ export default function RawDataInput({ onDataUpdate }: RawDataInputProps) {
         throw new Error("Input data must be a JSON array.");
       }
 
-      const response = await fetch('/api/stream', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(parsedData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit data to server.');
-      }
-      
-      const result = await response.json();
-      onDataUpdate(result.data); // Update dashboard with the full data from server
+      // We can post to both endpoints to simulate a full data flow
+      await Promise.all([
+          fetch('/api/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsedData),
+          }),
+          fetch('/api/stream/advanced-calls', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsedData),
+          }),
+      ]);
 
       toast({
         title: "Data Submitted!",
-        description: "Your data has been sent to the server and the dashboard is updated.",
+        description: "Your data has been sent to the server. The dashboard will update automatically.",
       });
 
     } catch (error: any) {

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   ComposableMap,
   Geographies,
@@ -16,15 +16,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { ScrollArea } from '../ui/scroll-area';
 
 const countryPrefixes: { [key: string]: string } = {
-  '1': 'USA', '33': 'FRA', '32': 'BEL', '49': 'DEU', '44': 'GBR', '34': 'ESP', '39': 'ITA',
-  '41': 'CHE', '212': 'MAR', '213': 'DZA', '216': 'TUN', '221': 'SEN'
+  '1': 'CAN', '33': 'FRA', '32': 'BEL', '49': 'DEU', '44': 'GBR', '34': 'ESP', '39': 'ITA',
+  '41': 'CHE', '212': 'MAR', '213': 'DZA', '216': 'TUN', '221': 'SEN', '86': 'CHN',
 };
 
 const countryCoordinates: { [key: string]: [number, number] } = {
-  USA: [-98.5795, 39.8283], FRA: [2.3522, 48.8566], BEL: [4.3517, 50.8503],
+  USA: [-98.5795, 39.8283], CAN: [-106.3468, 56.1304], FRA: [2.3522, 48.8566], BEL: [4.3517, 50.8503],
   DEU: [10.4515, 51.1657], GBR: [-3.4360, 55.3781], ESP: [-3.7038, 40.4168],
   ITA: [12.5674, 41.8719], CHE: [8.2275, 46.8182], MAR: [-7.0926, 31.7917],
-  DZA: [1.6596, 28.0339], TUN: [9.5375, 33.8869], SEN: [-14.4524, 14.4974]
+  DZA: [1.6596, 28.0339], TUN: [9.5375, 33.8869], SEN: [-14.4524, 14.4974],
+  CHN: [104.1954, 35.8617]
 };
 
 
