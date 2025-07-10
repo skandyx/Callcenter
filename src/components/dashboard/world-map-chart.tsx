@@ -118,15 +118,16 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
   }, [data, selectedCountryCode, selectedAgent]);
 
   const handleTreemapClick = (item: any) => {
-    if (item && item.name) {
-      if (item.isAgent) {
-        // If we're in agent view, clicking an agent sets the agent filter for the table
-        setSelectedAgent(prev => prev === item.name ? null : item.name);
-      } else {
-        // If we're in country view, clicking a country drills down into agent view
-        setSelectedCountryCode(item.code);
-        setSelectedAgent(null); // Reset agent filter when country changes
-      }
+    if (item && item.payload) { // Recharts payload is nested in `payload` property for onClick
+        const payload = item.payload;
+        if (payload.isAgent) {
+            // If we're in agent view, clicking an agent sets the agent filter for the table
+            setSelectedAgent(prev => prev === payload.name ? null : payload.name);
+        } else {
+            // If we're in country view, clicking a country drills down into agent view
+            setSelectedCountryCode(payload.code);
+            setSelectedAgent(null); // Reset agent filter when country changes
+        }
     }
   };
   
@@ -225,8 +226,8 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                      </TableRow>
                  </TableHeader>
                  <TableBody>
-                    {filteredCalls.length > 0 ? filteredCalls.map((call) => (
-                        <TableRow key={call.call_id}>
+                    {filteredCalls.length > 0 ? filteredCalls.map((call, index) => (
+                        <TableRow key={`${call.call_id}-${index}`}>
                             <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
                             <TableCell>
                               <div className="flex items-center">

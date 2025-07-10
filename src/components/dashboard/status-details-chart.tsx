@@ -210,8 +210,8 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {filteredCalls.length > 0 ? filteredCalls.map((call) => (
-                       <TableRow key={call.call_id}>
+                   {filteredCalls.length > 0 ? filteredCalls.map((call, index) => (
+                       <TableRow key={`${call.call_id}-${index}`}>
                            <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
                            <TableCell>{call.calling_number}</TableCell>
                            <TableCell>{call.agent || "N/A"}</TableCell>
