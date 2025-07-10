@@ -204,6 +204,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                     // If this is a parent call that has children, its status should be considered "Completed"
                     // as the agent successfully completed their action (transferring).
                     const displayStatus = (!item.isChild && item.hasChildren) ? "Completed" : item.status;
+                    const isActualTransfer = item.status_detail.toLowerCase().includes('transfer');
 
                     return (
                     <TableRow 
@@ -219,7 +220,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                             </div>
                           )}
                            <div className={cn("flex-1", item.isChild && "pl-0")}>
-                              <div>{new Date(item.enter_datetime).toLocaleDateString()}</div>
+                              <div>{new Date(item.enter_datetime).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' })}</div>
                               <div className="text-muted-foreground text-xs">{new Date(item.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</div>
                            </div>
                         </div>
@@ -227,7 +228,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                       <TableCell className="font-medium align-top">
                         <div className="flex items-center gap-2">
                           <span>{item.calling_number}</span>
-                          {item.parent_call_id && (
+                          {item.parent_call_id && isActualTransfer && (
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger>
