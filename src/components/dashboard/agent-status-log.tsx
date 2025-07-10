@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -121,7 +122,7 @@ export default function AgentStatusLog({ data }: AgentStatusLogProps) {
                       {item.date}
                     </TableCell>
                     <TableCell>
-                      {item.hour}:00
+                      {String(item.hour).padStart(2, '0')}:00
                     </TableCell>
                     <TableCell className="font-medium">
                       {item.user}
