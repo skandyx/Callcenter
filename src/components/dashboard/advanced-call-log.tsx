@@ -108,7 +108,7 @@ export default function AdvancedCallLog() {
       <CardHeader>
         <CardTitle>Advanced Call Log</CardTitle>
         <CardDescription>
-          Detailed event logs for each call, including transfers and attempts.
+          Journaux d'événements détaillés pour chaque appel, y compris les transferts et les tentatives.
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input

@@ -96,7 +96,7 @@ export default function AgentStatusLog() {
       <CardHeader>
         <CardTitle>Agent Status Log</CardTitle>
         <CardDescription>
-          Live status of agent connections and availability.
+          Statut en direct des connexions et de la disponibilité des agents.
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input

@@ -76,7 +76,7 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
       <CardHeader>
         <CardTitle>Call Distribution by Country</CardTitle>
         <CardDescription>
-          Geographic visualization of incoming call origins. Hover over a country for details.
+          Visualisation géographique de l'origine des appels entrants. Survolez un pays pour plus de détails.
         </CardDescription>
       </CardHeader>
       <CardContent style={{ width: '100%', height: '600px' }} data-tip="">

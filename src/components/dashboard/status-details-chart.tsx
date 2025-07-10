@@ -49,7 +49,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
       <CardHeader>
         <CardTitle>Call Status Breakdown</CardTitle>
         <CardDescription>
-          Distribution of detailed call outcomes for the day.
+          Distribution des résultats d'appel détaillés pour la journée.
         </CardDescription>
       </CardHeader>
       <CardContent>

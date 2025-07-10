@@ -76,7 +76,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
       <CardHeader>
         <CardTitle>Call Log</CardTitle>
         <CardDescription>
-          Detailed view of individual calls for the current day.
+          Vue détaillée des appels individuels pour la journée en cours.
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input
