@@ -3,14 +3,14 @@ export type CallData = {
   enter_hour: number;
   enter_year: number;
   enter_month: number | string;
-  time_in_queue_seconds?: number;
-  processing_time_seconds: number;
+  time_in_queue_seconds?: number | null;
+  processing_time_seconds?: number | null;
   less_than_30s_waittime?: number | null;
   less_than_60s_waittime?: number | null;
   less_than_120s_waittime?: number | null;
   version: number;
   call_id: string;
-  queue_name?: string;
+  queue_name?: string | null;
   enter_date: string;
   enter_time: string;
   enter_weekday: string;
@@ -26,6 +26,19 @@ export type CallData = {
   agent_number: string | null;
   parent_call_id?: string | null;
 };
+
+export type AdvancedCallData = CallData & {
+  // Add any fields specific to advanced call data here
+  // For example:
+  transfer_history?: {
+    timestamp: string;
+    from_agent: string;
+    to_agent: string;
+    reason: string;
+  }[];
+  failed_attempts?: number;
+};
+
 
 export type AgentStatusData = {
   hour: number;

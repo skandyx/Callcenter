@@ -38,7 +38,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
   const filteredData = useMemo(() => {
     return data
       .filter((call) =>
-        statusFilter === "all" ? true : call.status === statusFilter
+        statusFilter === "all" ? true : call.status.trim().toLowerCase() === statusFilter.trim().toLowerCase()
       )
       .filter(
         (call) =>
@@ -124,8 +124,8 @@ export default function CallLog({ data }: { data: CallData[] }) {
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((call) => (
-                  <TableRow key={call.call_id}>
+                paginatedData.map((call, index) => (
+                  <TableRow key={`${call.call_id}-${index}`}>
                     <TableCell>
                       {new Date(call.enter_datetime).toLocaleTimeString()}
                     </TableCell>
@@ -135,7 +135,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
                     <TableCell>{call.queue_name || "N/A"}</TableCell>
                     <TableCell>{call.agent || "N/A"}</TableCell>
                     <TableCell>{call.time_in_queue_seconds || 0}s</TableCell>
-                    <TableCell>{call.processing_time_seconds}s</TableCell>
+                    <TableCell>{call.processing_time_seconds || 0}s</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={getStatusVariant(call.status)}>
                         {call.status}

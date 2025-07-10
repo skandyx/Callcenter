@@ -4,8 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CallLog from "./call-log";
 import StatusDetailsChart from "./status-details-chart";
 import AgentStatusLog from "./agent-status-log";
+import AdvancedCallLog from "./advanced-call-log";
+import WorldMapChart from "./world-map-chart";
 import { type CallData } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 
 interface CallAnalyticsTabsProps {
   data: CallData[];
@@ -14,11 +15,12 @@ interface CallAnalyticsTabsProps {
 export default function CallAnalyticsTabs({ data }: CallAnalyticsTabsProps) {
   return (
     <Tabs defaultValue="log">
-      <TabsList className="grid w-full grid-cols-4 md:w-[800px]">
+      <TabsList className="grid w-full grid-cols-5 md:w-[800px]">
         <TabsTrigger value="log">Call Log</TabsTrigger>
         <TabsTrigger value="status">Status Details</TabsTrigger>
         <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
         <TabsTrigger value="advanced">Advanced</TabsTrigger>
+        <TabsTrigger value="map">World Map</TabsTrigger>
       </TabsList>
       <TabsContent value="log">
         <CallLog data={data} />
@@ -30,16 +32,10 @@ export default function CallAnalyticsTabs({ data }: CallAnalyticsTabsProps) {
         <AgentStatusLog />
       </TabsContent>
       <TabsContent value="advanced">
-        <Card>
-          <CardHeader>
-            <CardTitle>Advanced Analytics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              This section is under construction. What advanced data would you like to see here?
-            </p>
-          </CardContent>
-        </Card>
+        <AdvancedCallLog />
+      </TabsContent>
+      <TabsContent value="map">
+        <WorldMapChart data={data} />
       </TabsContent>
     </Tabs>
   );
