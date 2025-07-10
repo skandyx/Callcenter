@@ -89,7 +89,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
       <CardHeader>
         <CardTitle>Advanced Call Log</CardTitle>
         <CardDescription>
-          Journaux d'événements détaillés pour chaque appel, y compris les transferts et les tentatives.
+          Journaux d'événements détaillés pour chaque appel, y compris les transferts et les tentatives. Idéal pour une analyse forensique.
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input
@@ -138,7 +138,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                                 <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Transferred from: {item.parent_call_id}</p>
+                                <p>Transfert de : {item.parent_call_id}</p>
                               </TooltipContent>
                             </Tooltip>
                           )}
