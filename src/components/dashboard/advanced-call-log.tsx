@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
+import { ArrowRightLeft } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const ROWS_PER_PAGE = 10;
 
@@ -55,7 +57,7 @@ export default function AdvancedCallLog() {
 
   useEffect(() => {
     fetchAdvancedCallData();
-    const intervalId = setInterval(fetchAdvancedCallData, 5000); 
+    const intervalId = setInterval(fetchAdvancedCallData, 3000); 
     return () => clearInterval(intervalId);
   }, [fetchAdvancedCallData]);
 
@@ -122,51 +124,66 @@ export default function AdvancedCallLog() {
       </CardHeader>
       <CardContent>
         <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Caller</TableHead>
-                <TableHead>Queue</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Status Detail</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item, index) => (
-                  <TableRow key={`${item.call_id}-${index}`}>
-                    <TableCell>
-                      {new Date(item.enter_datetime).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(item.enter_datetime).toLocaleTimeString()}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {item.calling_number}
-                    </TableCell>
-                    <TableCell>{item.queue_name || "N/A"}</TableCell>
-                    <TableCell>{item.agent || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
-                    </TableCell>
-                    <TableCell>{item.status_detail}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No advanced call data received yet.
-                  </TableCell>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Caller</TableHead>
+                  <TableHead>Queue</TableHead>
+                  <TableHead>Agent</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Status Detail</TableHead>
+                  <TableHead>Transfer</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item, index) => (
+                    <TableRow key={`${item.call_id}-${index}`}>
+                      <TableCell>
+                        {new Date(item.enter_datetime).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(item.enter_datetime).toLocaleTimeString()}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {item.calling_number}
+                      </TableCell>
+                      <TableCell>{item.queue_name || "N/A"}</TableCell>
+                      <TableCell>{item.agent || "N/A"}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
+                      </TableCell>
+                      <TableCell>{item.status_detail}</TableCell>
+                      <TableCell>
+                        {item.parent_call_id && (
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Transferred from: {item.parent_call_id}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No advanced call data received yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         </div>
         <div className="flex items-center justify-end pt-4 space-x-2">
           <span className="text-sm text-muted-foreground">

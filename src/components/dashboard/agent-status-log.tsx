@@ -54,7 +54,7 @@ export default function AgentStatusLog() {
 
   useEffect(() => {
     fetchAgentStatusData();
-    const intervalId = setInterval(fetchAgentStatusData, 5000); 
+    const intervalId = setInterval(fetchAgentStatusData, 3000); 
     return () => clearInterval(intervalId);
   }, [fetchAgentStatusData]);
 
@@ -62,9 +62,9 @@ export default function AgentStatusLog() {
   const filteredData = useMemo(() => {
     return data.filter(
       (item) =>
-        item.user.toLowerCase().includes(filter.toLowerCase()) ||
-        item.email.toLowerCase().includes(filter.toLowerCase()) ||
-        item.queuename.toLowerCase().includes(filter.toLowerCase())
+        (item.user || "").toLowerCase().includes(filter.toLowerCase()) ||
+        (item.email || "").toLowerCase().includes(filter.toLowerCase()) ||
+        (item.queuename || "").toLowerCase().includes(filter.toLowerCase())
     );
   }, [data, filter]);
 

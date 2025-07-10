@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ComposableMap,
   Geographies,
   Geography,
-  Marker,
   ZoomableGroup,
 } from 'react-simple-maps';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -46,6 +45,8 @@ interface WorldMapChartProps {
 
 const WorldMapChart = ({ data }: WorldMapChartProps) => {
   const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+  
+  const [tooltipContent, setTooltipContent] = useState('');
 
   const callCountsByCountry = useMemo(() => {
     const counts: { [key: string]: number } = {};
@@ -62,12 +63,12 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
   
   const getColor = (countryCode: string) => {
       const count = callCountsByCountry[countryCode] || 0;
-      if (count === 0) return "#DDD";
-      const intensity = Math.min(1, count / (maxCalls > 0 ? maxCalls : 1));
-      const r = 220 - intensity * 120; // from blue to light blue
-      const g = 230 - intensity * 120;
-      const b = 255;
-      return `rgb(${r},${g},${b})`;
+      if (count === 0) return "#E5E7EB"; // A neutral grey color
+      // Scale color from light blue to dark blue
+      const intensity = Math.min(1, Math.log1p(count) / Math.log1p(maxCalls > 0 ? maxCalls : 1));
+      const blue = 255;
+      const redGreen = 230 - intensity * 180;
+      return `rgb(${redGreen},${redGreen},${blue})`;
   }
 
   return (
@@ -75,45 +76,45 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
       <CardHeader>
         <CardTitle>Call Distribution by Country</CardTitle>
         <CardDescription>
-          Geographic visualization of incoming call origins.
+          Geographic visualization of incoming call origins. Hover over a country for details.
         </CardDescription>
       </CardHeader>
-      <CardContent style={{ width: '100%', height: '600px' }}>
-          <TooltipProvider>
-            <ComposableMap projectionConfig={{ scale: 160 }} >
-                 <ZoomableGroup center={[0, 0]} zoom={1}>
-                    <Geographies geography={geoUrl}>
-                        {({ geographies }) =>
-                        geographies.map(geo => {
-                            const countryCode = geo.properties.iso_a3;
-                            const callCount = callCountsByCountry[countryCode] || 0;
-                            return (
-                                <Tooltip key={geo.rsmKey}>
-                                    <TooltipTrigger asChild>
-                                        <Geography
-                                            geography={geo}
-                                            fill={getColor(countryCode)}
-                                            stroke="#FFF"
-                                            style={{
-                                                default: { outline: "none" },
-                                                hover: { outline: "none", fill: "hsl(var(--primary))" },
-                                                pressed: { outline: "none" },
-                                            }}
-                                        />
-                                    </TooltipTrigger>
-                                    {callCount > 0 && (
-                                         <TooltipContent>
-                                            <p>{geo.properties.name}: {callCount} call(s)</p>
-                                        </TooltipContent>
-                                    )}
-                                </Tooltip>
-                            )
-                        })
-                        }
-                    </Geographies>
-                 </ZoomableGroup>
-            </ComposableMap>
-        </TooltipProvider>
+      <CardContent style={{ width: '100%', height: '600px' }} data-tip="">
+        <ComposableMap projectionConfig={{ scale: 160 }} >
+          <ZoomableGroup center={[0, 20]} zoom={1}>
+            <Geographies geography={geoUrl}>
+              {({ geographies }) =>
+                geographies.map(geo => {
+                  const countryCode = geo.properties.iso_a3;
+                  const callCount = callCountsByCountry[countryCode] || 0;
+                  return (
+                    <TooltipProvider key={geo.rsmKey} delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Geography
+                            geography={geo}
+                            fill={getColor(countryCode)}
+                            stroke="#FFF"
+                            style={{
+                              default: { outline: "none", transition: "fill 0.3s ease" },
+                              hover: { outline: "none", fill: "hsl(var(--primary))" },
+                              pressed: { outline: "none" },
+                            }}
+                          />
+                        </TooltipTrigger>
+                        {callCount > 0 && (
+                          <TooltipContent>
+                            <p>{geo.properties.name}: {callCount} call(s)</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  )
+                })
+              }
+            </Geographies>
+          </ZoomableGroup>
+        </ComposableMap>
       </CardContent>
     </Card>
   );
