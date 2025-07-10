@@ -6,13 +6,15 @@ import StatusDetailsChart from "./status-details-chart";
 import AgentStatusLog from "./agent-status-log";
 import AdvancedCallLog from "./advanced-call-log";
 import WorldMapChart from "./world-map-chart";
-import { type CallData } from "@/lib/types";
+import { type CallData, type AdvancedCallData, type AgentStatusData } from "@/lib/types";
 
 interface CallAnalyticsTabsProps {
-  data: CallData[];
+  callData: CallData[];
+  advancedCallData: AdvancedCallData[];
+  agentStatusData: AgentStatusData[];
 }
 
-export default function CallAnalyticsTabs({ data }: CallAnalyticsTabsProps) {
+export default function CallAnalyticsTabs({ callData, advancedCallData, agentStatusData }: CallAnalyticsTabsProps) {
   return (
     <Tabs defaultValue="log">
       <TabsList className="grid w-full grid-cols-5 md:w-[800px]">
@@ -23,19 +25,19 @@ export default function CallAnalyticsTabs({ data }: CallAnalyticsTabsProps) {
         <TabsTrigger value="map">World Map</TabsTrigger>
       </TabsList>
       <TabsContent value="log">
-        <CallLog data={data} />
+        <CallLog data={callData} />
       </TabsContent>
       <TabsContent value="status">
-        <StatusDetailsChart data={data} />
+        <StatusDetailsChart data={callData} />
       </TabsContent>
        <TabsContent value="agent-status">
-        <AgentStatusLog />
+        <AgentStatusLog data={agentStatusData} />
       </TabsContent>
       <TabsContent value="advanced">
-        <AdvancedCallLog />
+        <AdvancedCallLog data={advancedCallData} />
       </TabsContent>
       <TabsContent value="map">
-        <WorldMapChart data={data} />
+        <WorldMapChart data={callData} />
       </TabsContent>
     </Tabs>
   );

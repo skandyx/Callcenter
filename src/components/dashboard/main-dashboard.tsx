@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { type CallData } from "@/lib/types";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { type CallData, type AdvancedCallData, type AgentStatusData } from "@/lib/types";
+import { format } from "date-fns";
 
 import MetricsDashboard from "@/components/dashboard/metrics-dashboard";
 import AiSummary from "@/components/dashboard/ai-summary";
@@ -9,7 +10,7 @@ import AnomalyDetector from "@/components/dashboard/anomaly-detector";
 import CallAnalyticsTabs from "@/components/dashboard/call-analytics-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "../ui/button";
-import { Settings } from "lucide-react";
+import { Calendar as CalendarIcon, Settings } from "lucide-react";
 import AdvancedSettingsDialog from "./advanced-settings-dialog";
 import { cn } from "@/lib/utils";
 import RawDataInput from "./raw-data-input";
@@ -17,31 +18,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
 
 export default function MainDashboard() {
-  const [callData, setCallData] = useState<CallData[]>([]);
+  const [allCallData, setAllCallData] = useState<CallData[]>([]);
+  const [allAdvancedCallData, setAllAdvancedCallData] = useState<AdvancedCallData[]>([]);
+  const [allAgentStatusData, setAllAgentStatusData] = useState<AgentStatusData[]>([]);
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [dataReceived, setDataReceived] = useState(false);
   const [isAiEnabled, setIsAiEnabled] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const { toast } = useToast();
 
   const fetchCallData = useCallback(async () => {
     try {
       const response = await fetch('/api/call-data');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      if (!response.ok) throw new Error('Network response was not ok for call data');
       const data: CallData[] = await response.json();
-      
-      // Check if new data has actually been received
-      if (JSON.stringify(data) !== JSON.stringify(callData)) {
-        setCallData(data);
-        if (data.length > 0 && !dataReceived) {
-          setDataReceived(true);
-        }
+      if (JSON.stringify(data) !== JSON.stringify(allCallData)) {
+        setAllCallData(data);
+        if (data.length > 0) setDataReceived(true);
       }
-      
     } catch (error) {
       console.error("Failed to fetch call data:", error);
       toast({
@@ -49,24 +49,75 @@ export default function MainDashboard() {
         title: "Connection Error",
         description: "Could not fetch real-time data from the server.",
       });
-    } finally {
-      setIsLoading(false);
     }
-  }, [toast, callData, dataReceived]);
+  }, [toast, allCallData]);
 
+  const fetchAdvancedCallData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/advanced-call-data');
+      if (!response.ok) throw new Error('Network response was not ok for advanced call data');
+      const data: AdvancedCallData[] = await response.json();
+      if (JSON.stringify(data) !== JSON.stringify(allAdvancedCallData)) {
+        setAllAdvancedCallData(data);
+      }
+    } catch (error) {
+       console.error("Failed to fetch advanced call data:", error);
+    }
+  }, [allAdvancedCallData]);
 
+  const fetchAgentStatusData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/agent-status-data');
+      if (!response.ok) throw new Error('Network response was not ok for agent status data');
+      const data: AgentStatusData[] = await response.json();
+       if (JSON.stringify(data) !== JSON.stringify(allAgentStatusData)) {
+        setAllAgentStatusData(data);
+      }
+    } catch (error) {
+       console.error("Failed to fetch agent status data:", error);
+    }
+  }, [allAgentStatusData]);
+
+  const fetchAllData = useCallback(async () => {
+    await Promise.all([
+      fetchCallData(),
+      fetchAdvancedCallData(),
+      fetchAgentStatusData(),
+    ]);
+    setIsLoading(false);
+  }, [fetchCallData, fetchAdvancedCallData, fetchAgentStatusData]);
+  
   useEffect(() => {
-    fetchCallData();
-    const intervalId = setInterval(fetchCallData, 3000);
+    fetchAllData();
+    const intervalId = setInterval(fetchAllData, 3000);
     return () => clearInterval(intervalId);
-  }, [fetchCallData]);
+  }, [fetchAllData]);
 
   const handleDataUpdateFromInput = (newData: CallData[]) => {
-    setCallData(newData);
+    setAllCallData(newData);
      if (newData.length > 0) {
         setDataReceived(true);
       }
   };
+
+  const filteredCallData = useMemo(() => {
+    if (!selectedDate) return allCallData;
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return allCallData.filter(d => d.enter_date === formattedDate);
+  }, [allCallData, selectedDate]);
+  
+  const filteredAdvancedCallData = useMemo(() => {
+    if (!selectedDate) return allAdvancedCallData;
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return allAdvancedCallData.filter(d => d.enter_date === formattedDate);
+  }, [allAdvancedCallData, selectedDate]);
+
+  const filteredAgentStatusData = useMemo(() => {
+    if (!selectedDate) return allAgentStatusData;
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return allAgentStatusData.filter(d => d.date === formattedDate);
+  }, [allAgentStatusData, selectedDate]);
+
 
   return (
     <div className="flex flex-col min-h-screen dark bg-background text-foreground">
@@ -83,6 +134,34 @@ export default function MainDashboard() {
               onCheckedChange={setIsAiEnabled}
             />
           </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className={cn(
+                  "w-[240px] justify-start text-left font-normal",
+                  !selectedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                initialFocus
+              />
+               <Button 
+                variant="link" 
+                className="w-full"
+                onClick={() => setSelectedDate(undefined)}>
+                  Clear selection
+               </Button>
+            </PopoverContent>
+          </Popover>
           <div className="flex items-center gap-2">
             <span
               className={cn(
@@ -107,18 +186,22 @@ export default function MainDashboard() {
             <TabsTrigger value="data_input">Manual Data Input</TabsTrigger>
           </TabsList>
           <TabsContent value="dashboard">
-            {isLoading && callData.length === 0 ? (
+            {isLoading && allCallData.length === 0 ? (
               <DashboardSkeleton />
             ) : (
               <div className="flex flex-col gap-8">
-                <MetricsDashboard data={callData} />
+                <MetricsDashboard data={filteredCallData} />
                 {isAiEnabled && (
                   <div className="grid gap-8 lg:grid-cols-2">
-                    <AiSummary data={callData} dataLength={callData.length} />
-                    <AnomalyDetector data={callData} dataLength={callData.length} />
+                    <AiSummary data={filteredCallData} dataLength={filteredCallData.length} />
+                    <AnomalyDetector data={filteredCallData} dataLength={filteredCallData.length} />
                   </div>
                 )}
-                <CallAnalyticsTabs data={callData} />
+                <CallAnalyticsTabs 
+                    callData={filteredCallData}
+                    advancedCallData={filteredAdvancedCallData}
+                    agentStatusData={filteredAgentStatusData}
+                />
               </div>
             )}
           </TabsContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { type AdvancedCallData } from "@/lib/types";
 import {
   Table,
@@ -20,47 +20,20 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 import { ArrowRightLeft } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const ROWS_PER_PAGE = 10;
 
-export default function AdvancedCallLog() {
-  const [data, setData] = useState<AdvancedCallData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  
+interface AdvancedCallLogProps {
+  data: AdvancedCallData[];
+}
+
+export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
-  const fetchAdvancedCallData = useCallback(async () => {
-    try {
-      const response = await fetch('/api/advanced-call-data');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const fetchedData: AdvancedCallData[] = await response.json();
-      setData(fetchedData);
-    } catch (error) {
-      console.error("Failed to fetch advanced call data:", error);
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Could not fetch advanced call data from the server.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchAdvancedCallData();
-    const intervalId = setInterval(fetchAdvancedCallData, 3000); 
-    return () => clearInterval(intervalId);
-  }, [fetchAdvancedCallData]);
-
+  
   const filteredData = useMemo(() => {
     return data.filter(
       (item) =>
@@ -86,7 +59,7 @@ export default function AdvancedCallLog() {
     }
   };
 
-  if (isLoading) {
+  if (!data) {
       return (
           <Card>
               <CardHeader>
@@ -177,7 +150,7 @@ export default function AdvancedCallLog() {
                       colSpan={8}
                       className="h-24 text-center text-muted-foreground"
                     >
-                      No advanced call data received yet.
+                      No advanced call data received for the selected date.
                     </TableCell>
                   </TableRow>
                 )}

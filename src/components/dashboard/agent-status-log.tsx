@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { type AgentStatusData } from "@/lib/types";
 import {
   Table,
@@ -19,47 +19,20 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 
 const ROWS_PER_PAGE = 10;
 
-export default function AgentStatusLog() {
-  const [data, setData] = useState<AgentStatusData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-  
+interface AgentStatusLogProps {
+  data: AgentStatusData[];
+}
+
+export default function AgentStatusLog({ data }: AgentStatusLogProps) {
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const fetchAgentStatusData = useCallback(async () => {
-    try {
-      const response = await fetch('/api/agent-status-data');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      const fetchedData: AgentStatusData[] = await response.json();
-      setData(fetchedData);
-    } catch (error) {
-      console.error("Failed to fetch agent status data:", error);
-      toast({
-        variant: "destructive",
-        title: "Connection Error",
-        description: "Could not fetch agent status data from the server.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchAgentStatusData();
-    const intervalId = setInterval(fetchAgentStatusData, 3000); 
-    return () => clearInterval(intervalId);
-  }, [fetchAgentStatusData]);
-
-
   const filteredData = useMemo(() => {
+    if (!data) return [];
     return data.filter(
       (item) =>
         (item.user || "").toLowerCase().includes(filter.toLowerCase()) ||
@@ -74,7 +47,7 @@ export default function AgentStatusLog() {
     currentPage * ROWS_PER_PAGE
   );
   
-  if(isLoading) {
+  if(!data) {
       return (
           <Card>
               <CardHeader>
@@ -151,7 +124,7 @@ export default function AgentStatusLog() {
                     colSpan={8}
                     className="h-24 text-center text-muted-foreground"
                   >
-                    No agent status data received yet.
+                    No agent status data received for the selected date.
                   </TableCell>
                 </TableRow>
               )}
