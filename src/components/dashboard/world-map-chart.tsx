@@ -2,17 +2,9 @@
 "use client";
 
 import React, { useMemo, useState } from 'react';
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  ZoomableGroup,
-  Marker
-} from 'react-simple-maps';
 import { ResponsiveContainer, Treemap, Tooltip as RechartsTooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { type CallData } from '@/lib/types';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
@@ -32,14 +24,6 @@ const countryPrefixes: { [key: string]: { code: string, name: string } } = {
   '216': { code: 'TUN', name: 'Tunisia' },
   '221': { code: 'SEN', name: 'Senegal' },
   '86': { code: 'CHN', name: 'China' },
-};
-
-const countryCoordinates: { [key: string]: [number, number] } = {
-  USA: [-98.5795, 39.8283], CAN: [-106.3468, 56.1304], FRA: [2.3522, 48.8566], BEL: [4.3517, 50.8503],
-  DEU: [10.4515, 51.1657], GBR: [-3.4360, 55.3781], ESP: [-3.7038, 40.4168],
-  ITA: [12.5674, 41.8719], CHE: [8.2275, 46.8182], MAR: [-7.0926, 31.7917],
-  DZA: [1.6596, 28.0339], TUN: [9.5375, 33.8869], SEN: [-14.4524, 14.4974],
-  CHN: [104.1954, 35.8617]
 };
 
 const getCountryInfoFromNumber = (phoneNumber: string): { code: string, name: string } | null => {
@@ -88,7 +72,7 @@ const CustomizedTreemapContent = ({ root, depth, x, y, width, height, index, nam
 
 const WorldMapChart = ({ data }: WorldMapChartProps) => {
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
-  const geoUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const callCountsByCountry = useMemo(() => {
     const counts: { [key: string]: CallStats } = {};
@@ -116,31 +100,44 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
   const treemapData = useMemo(() => {
     return Object.entries(callCountsByCountry)
       .map(([code, stats]) => ({
-        name: code,
+        name: stats.countryName,
+        code: code,
         size: stats.received + stats.emitted,
       }))
       .filter(c => c.size > 0)
       .sort((a, b) => b.size - a.size);
   }, [callCountsByCountry]);
+
+  const agentsForSelectedCountry = useMemo(() => {
+    if (!selectedCountryCode) return [];
+    const agentSet = new Set<string>();
+    data.forEach(call => {
+      const countryInfo = getCountryInfoFromNumber(call.calling_number);
+      if (countryInfo?.code === selectedCountryCode && call.agent) {
+        agentSet.add(call.agent);
+      }
+    });
+    return Array.from(agentSet).sort();
+  }, [data, selectedCountryCode]);
   
   const filteredCalls = useMemo(() => {
-    if (!selectedCountryCode) return data;
     return data.filter(call => {
-      const countryInfo = getCountryInfoFromNumber(call.calling_number);
-      return countryInfo?.code === selectedCountryCode;
+        const countryInfo = getCountryInfoFromNumber(call.calling_number);
+        const countryMatch = selectedCountryCode ? countryInfo?.code === selectedCountryCode : true;
+        const agentMatch = selectedAgent ? call.agent === selectedAgent : true;
+        return countryMatch && agentMatch;
     });
-  }, [data, selectedCountryCode]);
-
-  const getMarkerColor = (stats: CallStats) => {
-    if (!stats || (stats.received === 0 && stats.emitted === 0)) {
-        return "rgba(107, 114, 128, 0.5)";
-    }
-    return stats.emitted > stats.received ? "#EF4444" : "#22C55E";
-  }
+  }, [data, selectedCountryCode, selectedAgent]);
 
   const handleTreemapClick = (item: any) => {
-    if (item && item.name) {
-      setSelectedCountryCode(item.name);
+    if (item && item.code) {
+        if (selectedCountryCode === item.code) {
+            setSelectedCountryCode(null);
+            setSelectedAgent(null);
+        } else {
+            setSelectedCountryCode(item.code);
+            setSelectedAgent(null);
+        }
     }
   };
   
@@ -155,80 +152,28 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
       default: return "secondary";
     }
   };
-
+  
+  const clearFilters = () => {
+    setSelectedCountryCode(null);
+    setSelectedAgent(null);
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Call Distribution by Country</CardTitle>
         <CardDescription>
-          Visualisation géographique des appels. Cliquez sur un pays dans la treemap pour filtrer le journal d'appels.
+          Visualisation géographique des appels. Cliquez sur un pays pour filtrer le journal d'appels.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2 w-full h-[600px]" data-tip="">
-              <ComposableMap projectionConfig={{ scale: 160 }} >
-              <ZoomableGroup center={[0, 20]} zoom={1}>
-                <Geographies geography={geoUrl}>
-                  {({ geographies }) =>
-                    geographies.map(geo => {
-                      return (
-                        <Geography
-                          key={geo.rsmKey}
-                          geography={geo}
-                          fill="#E5E7EB"
-                          stroke="#FFF"
-                          style={{
-                            default: { outline: "none" },
-                            hover: { outline: "none" },
-                            pressed: { outline: "none" },
-                          }}
-                        />
-                      )
-                    })
-                  }
-                </Geographies>
-                {Object.entries(callCountsByCountry).map(([countryCode, stats]) => {
-                    const totalCalls = stats.received + stats.emitted;
-                    if (totalCalls === 0 || !countryCoordinates[countryCode]) return null;
-                    const size = 5 + Math.log1p(totalCalls) * 3;
-                    return (
-                      <Marker key={countryCode} coordinates={countryCoordinates[countryCode]}>
-                        <TooltipProvider delayDuration={100}>
-                          <Tooltip>
-                              <TooltipTrigger>
-                                <circle
-                                  r={size}
-                                  fill={getMarkerColor(stats)}
-                                  stroke="#FFF"
-                                  strokeWidth={1}
-                                  className="transition-all hover:r-[calc(var(--r,8)*1.2)]"
-                                  style={{'--r': size} as any}
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                  <div className="flex flex-col gap-1 text-sm">
-                                     <p className="font-bold text-base">{stats.countryName} ({countryCode})</p>
-                                     <p><span className="text-green-600 font-semibold">● Reçus:</span> {stats.received}</p>
-                                     <p><span className="text-red-600 font-semibold">● Émis:</span> {stats.emitted}</p>
-                                     <p><span className="text-muted-foreground">Durée totale:</span> {(stats.totalDuration / 60).toFixed(1)} min</p>
-                                  </div>
-                              </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </Marker>
-                    )
-                })}
-              </ZoomableGroup>
-              </ComposableMap>
-          </div>
-          <div className="md:col-span-1 h-[600px]">
-            <h4 className="text-lg font-semibold mb-2">Summary by Country</h4>
+        <div className="w-full h-[400px]">
+          <h4 className="text-lg font-semibold mb-2 text-center">Summary by Country</h4>
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
                 data={treemapData}
                 dataKey="size"
+                nameKey="name"
                 ratio={4 / 3}
                 stroke="#fff"
                 fill="hsl(var(--primary))"
@@ -239,17 +184,39 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
                   <RechartsTooltip formatter={(value, name) => [value, `Total Calls`]}/>
               </Treemap>
             </ResponsiveContainer>
-          </div>
         </div>
+
+        {selectedCountryCode && agentsForSelectedCountry.length > 0 && (
+            <div className="p-4 border rounded-lg bg-muted/50">
+                <h4 className="mb-2 text-sm font-semibold">
+                    Filter by agent for country: <span className="font-bold">{callCountsByCountry[selectedCountryCode]?.countryName}</span>
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                    {agentsForSelectedCountry.map(agent => (
+                        <Button
+                            key={agent}
+                            size="sm"
+                            variant={selectedAgent === agent ? "default" : "outline"}
+                            onClick={() => setSelectedAgent(prev => prev === agent ? null : agent)}
+                        >
+                            {agent}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+        )}
 
         <div>
            <div className="flex items-center justify-between mb-4">
              <h4 className="text-lg font-semibold">
-               Call Log {selectedCountryCode && `(Filtered by: ${callCountsByCountry[selectedCountryCode]?.countryName || selectedCountryCode})`}
+               Call Log
+               {selectedCountryCode && ` (Filtered by: ${callCountsByCountry[selectedCountryCode]?.countryName || selectedCountryCode}`}
+               {selectedAgent && ` & ${selectedAgent}`}
+               {selectedCountryCode && `)`}
              </h4>
-             {selectedCountryCode && (
-               <Button variant="ghost" onClick={() => setSelectedCountryCode(null)}>
-                 Clear selection
+             {(selectedCountryCode || selectedAgent) && (
+               <Button variant="ghost" onClick={clearFilters}>
+                 Clear filters
                </Button>
              )}
            </div>
@@ -280,7 +247,7 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
                     )) : (
                       <TableRow>
                          <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                             No calls found for this country.
+                             No calls found for this filter combination.
                          </TableCell>
                       </TableRow>
                     )}

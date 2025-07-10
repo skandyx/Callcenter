@@ -68,6 +68,7 @@ const CustomizedContent = ({ root, depth, x, y, width, height, index, payload, r
 
 export default function StatusDetailsChart({ data }: { data: CallData[] }) {
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const chartData = useMemo(() => {
     const statusCounts: { [key: string]: number } = {};
@@ -81,16 +82,35 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
       .sort((a, b) => b.size - a.size);
   }, [data]);
 
-  const filteredCalls = useMemo(() => {
-    if (!selectedStatus) {
-      return data;
-    }
-    return data.filter(call => (call.status_detail || "N/A") === selectedStatus);
+  const agentsForSelectedStatus = useMemo(() => {
+    if (!selectedStatus) return [];
+    const agentSet = new Set<string>();
+    data.forEach(call => {
+      if ((call.status_detail || "N/A") === selectedStatus && call.agent) {
+        agentSet.add(call.agent);
+      }
+    });
+    return Array.from(agentSet).sort();
   }, [data, selectedStatus]);
+
+  const filteredCalls = useMemo(() => {
+    return data.filter(call => {
+        const statusMatch = selectedStatus ? (call.status_detail || "N/A") === selectedStatus : true;
+        const agentMatch = selectedAgent ? call.agent === selectedAgent : true;
+        return statusMatch && agentMatch;
+    });
+  }, [data, selectedStatus, selectedAgent]);
 
   const handleTreemapClick = (item: any) => {
     if (item && item.name) {
-      setSelectedStatus(item.name);
+      if (selectedStatus === item.name) {
+        // If clicking the same status, reset everything
+        setSelectedStatus(null);
+        setSelectedAgent(null);
+      } else {
+        setSelectedStatus(item.name);
+        setSelectedAgent(null); // Reset agent when status changes
+      }
     }
   };
   
@@ -106,6 +126,10 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
     }
   };
 
+  const clearFilters = () => {
+    setSelectedStatus(null);
+    setSelectedAgent(null);
+  };
 
   return (
     <Card>
@@ -139,14 +163,37 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
           )}
         </div>
         
+        {selectedStatus && agentsForSelectedStatus.length > 0 && (
+            <div className="p-4 border rounded-lg bg-muted/50">
+                <h4 className="mb-2 text-sm font-semibold">
+                    Filter by agent for status: <span className="font-bold">{selectedStatus}</span>
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                    {agentsForSelectedStatus.map(agent => (
+                        <Button
+                            key={agent}
+                            size="sm"
+                            variant={selectedAgent === agent ? "default" : "outline"}
+                            onClick={() => setSelectedAgent(prev => prev === agent ? null : agent)}
+                        >
+                            {agent}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+        )}
+
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold">
-              Call Log {selectedStatus && `(Filtered by: ${selectedStatus})`}
+              Call Log
+              {selectedStatus && ` (Filtered by: ${selectedStatus}`}
+              {selectedAgent && ` & ${selectedAgent}`}
+              {selectedStatus && `)`}
             </h4>
-            {selectedStatus && (
-              <Button variant="ghost" onClick={() => setSelectedStatus(null)}>
-                Clear selection
+            {(selectedStatus || selectedAgent) && (
+              <Button variant="ghost" onClick={clearFilters}>
+                Clear filters
               </Button>
             )}
           </div>
@@ -175,7 +222,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
                    )) : (
                      <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                            No calls found for this status.
+                            No calls found for this filter combination.
                         </TableCell>
                      </TableRow>
                    )}
