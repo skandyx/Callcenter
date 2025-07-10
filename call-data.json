@@ -98,5 +98,30 @@
     "agent_id": "deadbeef",
     "agent_number": "003228829677",
     "parent_call_id": null
+  },
+  {
+    "enter_datetime": "2025-07-10T15:10:08.555Z",
+    "enter_hour": 15,
+    "enter_year": 2025,
+    "enter_month": "202507",
+    "time_in_queue_seconds": 4,
+    "processing_time_seconds": 98,
+    "less_than_30s_waittime": 1,
+    "version": 5,
+    "call_id": "blind-transfer-parent-1",
+    "queue_name": "Support",
+    "enter_date": "2025-07-10",
+    "enter_time": "15:10:05",
+    "enter_weekday": "4.Thursday",
+    "calling_number": "+34912345678",
+    "agent": "Zoro Roronoa",
+    "status": "Completed",
+    "status_detail": "Transfer - Blind",
+    "calling_name": "Client D",
+    "enter_week": "202528",
+    "internal_call": "No",
+    "agent_id": "deadbeef",
+    "agent_number": "003228829677",
+    "parent_call_id": "initial-external-blind-1"
   }
 ]
