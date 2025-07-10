@@ -1,3 +1,4 @@
+
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
@@ -5,6 +6,7 @@ import path from "path";
 const simplifiedDataPath = path.join(process.cwd(), "call-data.json");
 const advancedDataPath = path.join(process.cwd(), "advanced-call-data.json");
 const agentStatusDataPath = path.join(process.cwd(), "agent-status-data.json");
+const queueIvrDataPath = path.join(process.cwd(), "queue-ivr-data.json");
 
 
 async function clearFile(filePath: string): Promise<void> {
@@ -28,6 +30,7 @@ export async function POST() {
         await clearFile(simplifiedDataPath);
         await clearFile(advancedDataPath);
         await clearFile(agentStatusDataPath);
+        await clearFile(queueIvrDataPath);
 
         return NextResponse.json(
             { message: "Toutes les données d'appel ont été effacées avec succès." },

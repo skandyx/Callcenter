@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { type CallData, type AdvancedCallData, type AgentStatusData } from "@/lib/types";
+import { type CallData, type AdvancedCallData, type AgentStatusData, type QueueIvrData } from "@/lib/types";
 import { format } from "date-fns";
 
 import MetricsDashboard from "@/components/dashboard/metrics-dashboard";
@@ -25,6 +26,7 @@ export default function MainDashboard() {
   const [allCallData, setAllCallData] = useState<CallData[]>([]);
   const [allAdvancedCallData, setAllAdvancedCallData] = useState<AdvancedCallData[]>([]);
   const [allAgentStatusData, setAllAgentStatusData] = useState<AgentStatusData[]>([]);
+  const [allQueueIvrData, setAllQueueIvrData] = useState<QueueIvrData[]>([]);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -77,15 +79,29 @@ export default function MainDashboard() {
        console.error("Failed to fetch agent status data:", error);
     }
   }, [allAgentStatusData]);
+  
+  const fetchQueueIvrData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/queue-ivr-data');
+      if (!response.ok) throw new Error('Network response was not ok for queue/IVR data');
+      const data: QueueIvrData[] = await response.json();
+       if (JSON.stringify(data) !== JSON.stringify(allQueueIvrData)) {
+        setAllQueueIvrData(data);
+      }
+    } catch (error) {
+       console.error("Failed to fetch queue/IVR data:", error);
+    }
+  }, [allQueueIvrData]);
 
   const fetchAllData = useCallback(async () => {
     await Promise.all([
       fetchCallData(),
       fetchAdvancedCallData(),
       fetchAgentStatusData(),
+      fetchQueueIvrData(),
     ]);
     setIsLoading(false);
-  }, [fetchCallData, fetchAdvancedCallData, fetchAgentStatusData]);
+  }, [fetchCallData, fetchAdvancedCallData, fetchAgentStatusData, fetchQueueIvrData]);
   
   useEffect(() => {
     fetchAllData();
@@ -117,6 +133,12 @@ export default function MainDashboard() {
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     return allAgentStatusData.filter(d => d.date === formattedDate);
   }, [allAgentStatusData, selectedDate]);
+  
+  const filteredQueueIvrData = useMemo(() => {
+    if (!selectedDate) return allQueueIvrData;
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return allQueueIvrData.filter(d => new Date(d.datetime).toISOString().split('T')[0] === formattedDate);
+  }, [allQueueIvrData, selectedDate]);
 
 
   return (
@@ -201,6 +223,7 @@ export default function MainDashboard() {
                     callData={filteredCallData}
                     advancedCallData={filteredAdvancedCallData}
                     agentStatusData={filteredAgentStatusData}
+                    queueIvrData={filteredQueueIvrData}
                 />
               </div>
             )}

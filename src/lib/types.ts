@@ -1,3 +1,4 @@
+
 export type CallData = {
   enter_datetime: string;
   enter_hour: number;
@@ -5,6 +6,7 @@ export type CallData = {
   enter_month: number | string;
   time_in_queue_seconds?: number | null;
   processing_time_seconds?: number | null;
+  less_than_10s_waittime?: number | null;
   less_than_30s_waittime?: number | null;
   less_than_60s_waittime?: number | null;
   less_than_120s_waittime?: number | null;
@@ -85,4 +87,14 @@ export type ProfileAvailabilityData = {
   user: string;
   user_id: string;
   email: string;
+};
+
+export type QueueIvrData = {
+  datetime: string;
+  call_id: string;
+  queue_name: string | null;
+  calling_number: string;
+  ivr_path: string;
+  event_type: "EnterIVR" | "KeyPress" | "EnterQueue" | "ExitIVR" | "Timeout" | "Hangup";
+  event_detail: string;
 };

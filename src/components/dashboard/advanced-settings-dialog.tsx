@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,12 @@ const urlItems: UrlItem[] = [
     description: "Statistiques sur le temps passé par les utilisateurs dans chaque profil.",
     path: "/api/stream/profile-availability",
   },
+  {
+    id: "queue-ivr",
+    label: "Données de file d'attente et IVR",
+    description: "Journaux d'événements pour le parcours de l'appelant dans les menus vocaux.",
+    path: "/api/stream/queue-ivr",
+  }
 ];
 
 export default function AdvancedSettingsDialog({
