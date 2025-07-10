@@ -1,24 +1,52 @@
 
 "use client";
 
-import React from 'react';
-import { User, Phone, PhoneOutgoing, Clock, BarChart } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { User, Phone, PhoneOutgoing, Clock, BarChart, PhoneMissed } from 'lucide-react';
+import { type AdvancedCallData } from '@/lib/types';
 
-const UserWallboard = () => {
+
+interface UserWallboardProps {
+    advancedCallData: AdvancedCallData[];
+}
+
+
+const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
+
+  const agentStats = useMemo(() => {
+    if (!advancedCallData) return {};
+    const stats: { [key: string]: { missedCalls: number } } = {};
+    
+    advancedCallData.forEach(call => {
+        if (call.agent) {
+            if (!stats[call.agent]) {
+                stats[call.agent] = { missedCalls: 0 };
+            }
+            if (call.status === 'Abandoned' && call.status_detail.toLowerCase().includes('missed')) {
+                stats[call.agent].missedCalls++;
+            }
+        }
+    });
+
+    return stats;
+  }, [advancedCallData]);
+
   // Mock data for demonstration purposes
   const agents = [
-    { name: "Luffy Monkey D", status: "In Call", callsAnswered: 15, callsOut: 5, avgTalkTime: "3m 45s", totalTalkTime: "56m 15s" },
-    { name: "Zoro Roronoa", status: "Available", callsAnswered: 12, callsOut: 2, avgTalkTime: "4m 10s", totalTalkTime: "50m 00s" },
-    { name: "Alex 777", status: "Wrap-up", callsAnswered: 20, callsOut: 8, avgTalkTime: "2m 55s", totalTalkTime: "58m 20s" },
-    { name: "Sanji Vinsmoke", status: "Away", callsAnswered: 10, callsOut: 1, avgTalkTime: "5m 02s", totalTalkTime: "50m 20s" }
+    { name: "Luffy Monkey D", status: "In Call", timeInStatus: "2m 15s", callsAnswered: 15, callsOut: 5, avgTalkTime: "3m 45s", totalTalkTime: "56m 15s" },
+    { name: "Zoro Roronoa", status: "Available", timeInStatus: "1m 30s", callsAnswered: 12, callsOut: 2, avgTalkTime: "4m 10s", totalTalkTime: "50m 00s" },
+    { name: "Alex 777", status: "Wrap-up", timeInStatus: "0m 45s", callsAnswered: 20, callsOut: 8, avgTalkTime: "2m 55s", totalTalkTime: "58m 20s" },
+    { name: "Sanji Vinsmoke", status: "Away", timeInStatus: "10m 05s", callsAnswered: 10, callsOut: 1, avgTalkTime: "5m 02s", totalTalkTime: "50m 20s" }
   ];
 
   const headerIcons = [
-    { Icon: User, label: "Status" },
-    { Icon: Phone, label: "Calls Answered" },
-    { Icon: PhoneOutgoing, label: "Outbound Calls" },
-    { Icon: Clock, label: "Avg. Talk Time" },
-    { Icon: BarChart, label: "Total Talk Time" },
+    { Icon: User, label: "Statut" },
+    { Icon: Clock, label: "Temps État Actuel" },
+    { Icon: Phone, label: "Appels Répondus" },
+    { Icon: PhoneOutgoing, label: "Appels Sortants" },
+    { Icon: PhoneMissed, label: "Appels Manqués" },
+    { Icon: Clock, label: "Temps Com. Moyen" },
+    { Icon: BarChart, label: "Temps Com. Total" },
   ];
   
   const getStatusColor = (status: string) => {
@@ -34,7 +62,7 @@ const UserWallboard = () => {
   return (
     <div className="h-full flex flex-col">
       {/* Header Row */}
-      <div className="grid grid-cols-[3fr_repeat(5,_1fr)] gap-2 mb-2 items-end">
+      <div className="grid grid-cols-[2.5fr_repeat(7,_1fr)] gap-2 mb-2 items-end">
           <div />
           {headerIcons.map(({ Icon }, index) => (
                <div key={index} className="flex justify-center">
@@ -46,15 +74,17 @@ const UserWallboard = () => {
       {/* Agent Rows */}
       <div className="space-y-3 flex-1">
           {agents.map((agent, agentIndex) => (
-              <div key={agentIndex} className="grid grid-cols-[3fr_repeat(5,_1fr)] gap-2 items-center">
+              <div key={agentIndex} className="grid grid-cols-[2.5fr_repeat(7,_1fr)] gap-2 items-center">
                   <div className="bg-gray-800 rounded-lg p-4 h-full flex flex-col justify-center">
                       <div className="text-2xl font-bold">{agent.name}</div>
                   </div>
                    <div className={`${getStatusColor(agent.status)} rounded-lg p-4 h-full flex items-center justify-center text-xl font-semibold`}>
                        {agent.status}
                    </div>
+                   <MetricBox value={agent.timeInStatus} />
                    <MetricBox value={agent.callsAnswered} />
                    <MetricBox value={agent.callsOut} />
+                   <MetricBox value={agentStats[agent.name]?.missedCalls || 0} isAlert={(agentStats[agent.name]?.missedCalls || 0) > 0} />
                    <MetricBox value={agent.avgTalkTime} />
                    <MetricBox value={agent.totalTalkTime} />
               </div>
@@ -77,11 +107,15 @@ const UserWallboard = () => {
 
 interface MetricBoxProps {
     value: string | number;
+    isAlert?: boolean;
 }
 
-const MetricBox: React.FC<MetricBoxProps> = ({ value }) => {
+const MetricBox: React.FC<MetricBoxProps> = ({ value, isAlert = false }) => {
+    const baseClasses = "bg-gray-800 rounded-lg p-4 h-full flex items-center justify-center text-3xl font-semibold";
+    const alertClasses = isAlert ? "bg-red-600" : "";
+    
     return (
-        <div className="bg-gray-800 rounded-lg p-4 h-full flex items-center justify-center text-3xl font-semibold">
+        <div className={`${baseClasses} ${alertClasses}`}>
             {value}
         </div>
     )

@@ -1,26 +1,59 @@
 
 "use client";
 
-import React from 'react';
-import { Headset, Phone, Clock, Check, PhoneMissed, Star } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Headset, Phone, Clock, Check, PhoneMissed, Star, Users } from 'lucide-react';
+import { type AgentStatusData } from '@/lib/types';
 
-const QueueWallboard = () => {
+
+interface QueueWallboardProps {
+    agentStatusData: AgentStatusData[];
+}
+
+const QueueWallboard = ({ agentStatusData }: QueueWallboardProps) => {
+
+  const agentsPerQueue = useMemo(() => {
+    if (!agentStatusData) return {};
+    const queueAgentCount: { [key: string]: number } = {};
+    
+    // Use the most recent status data for each agent per queue to determine if they are logged in
+    const latestAgentStatus: { [key: string]: AgentStatusData } = {};
+    agentStatusData.forEach(status => {
+      const key = `${status.user_id}-${status.queuename}`;
+      const existing = latestAgentStatus[key];
+      if (!existing || new Date(`${status.date}T${String(status.hour).padStart(2,'0')}:00:00`) > new Date(`${existing.date}T${String(existing.hour).padStart(2,'0')}:00:00`)) {
+        latestAgentStatus[key] = status;
+      }
+    });
+
+    Object.values(latestAgentStatus).forEach(status => {
+        if (status.loggedIn > 0) { // Consider agent connected if loggedIn time is positive
+            if (!queueAgentCount[status.queuename]) {
+                queueAgentCount[status.queuename] = 0;
+            }
+            queueAgentCount[status.queuename]++;
+        }
+    });
+
+    return queueAgentCount;
+  }, [agentStatusData]);
+    
   // Mock data for demonstration purposes
   const queues = [
-    { name: "A-1", status: "Open", loggedIn: 0, inQueue: 0, currentWait: "0s", avgWait: "0s", received: 0, missed: 0, serviceLevel: "100%" },
-    { name: "HELPDESK", status: "Open", loggedIn: 2, inQueue: 0, currentWait: "0s", avgWait: "0s", received: 0, missed: 0, serviceLevel: "100%" },
-    { name: "Sales FR", status: "Closed", loggedIn: 5, inQueue: 3, currentWait: "1m 32s", avgWait: "45s", received: 25, missed: 2, serviceLevel: "92%" },
-    { name: "Support EN", status: "Open", loggedIn: 3, inQueue: 1, currentWait: "22s", avgWait: "30s", received: 18, missed: 1, serviceLevel: "95%" }
+    { name: "A-1", status: "Open", inQueue: 0, currentWait: "0s", avgWait: "0s", received: 0, missed: 0, serviceLevel: "100%" },
+    { name: "HELPDESK", status: "Open", inQueue: 0, currentWait: "0s", avgWait: "0s", received: 0, missed: 0, serviceLevel: "100%" },
+    { name: "Ventes", status: "Closed", inQueue: 3, currentWait: "1m 32s", avgWait: "45s", received: 25, missed: 2, serviceLevel: "92%" },
+    { name: "Support", status: "Open", inQueue: 1, currentWait: "22s", avgWait: "30s", received: 18, missed: 1, serviceLevel: "95%" }
   ];
 
   const headerIcons = [
-    { Icon: Headset, label: "Logged in" },
-    { Icon: Phone, label: "Calls in queue" },
-    { Icon: Clock, label: "Current wait time" },
-    { Icon: Clock, label: "Average wait time" },
-    { Icon: Check, label: "Received calls" },
-    { Icon: PhoneMissed, label: "Missed calls" },
-    { Icon: Star, label: "Service level" }
+    { Icon: Users, label: "Agents connectés" },
+    { Icon: Phone, label: "Appels en file" },
+    { Icon: Clock, label: "Temps d'attente max" },
+    { Icon: Clock, label: "Temps d'attente moyen" },
+    { Icon: Check, label: "Appels reçus" },
+    { Icon: PhoneMissed, label: "Appels manqués" },
+    { Icon: Star, label: "Niveau de service" }
   ];
 
   return (
@@ -43,7 +76,7 @@ const QueueWallboard = () => {
                       <div className="text-2xl font-bold">{queue.name}</div>
                       <div className="text-gray-400">{queue.status}</div>
                   </div>
-                   <MetricBox value={queue.loggedIn} isHighlighted={queue.loggedIn > 0} />
+                   <MetricBox value={agentsPerQueue[queue.name] || 0} isHighlighted={(agentsPerQueue[queue.name] || 0) > 0} />
                    <MetricBox value={queue.inQueue} isHighlighted={queue.inQueue > 0} />
                    <MetricBox value={queue.currentWait} />
                    <MetricBox value={queue.avgWait} />
