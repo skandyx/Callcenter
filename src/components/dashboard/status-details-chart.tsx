@@ -154,7 +154,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="w-full h-[400px]">
+        <div className="w-full h-[300px]">
           {selectedStatus && (
               <Button variant="ghost" size="sm" onClick={goBackToStatusView} className="mb-2">
                   <ArrowLeft className="mr-2 h-4 w-4" />
