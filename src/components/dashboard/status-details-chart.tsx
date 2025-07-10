@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
+import { ArrowLeft } from "lucide-react";
 
 
 // Helper function to generate a color palette
@@ -71,27 +72,32 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
   const chartData = useMemo(() => {
-    const statusCounts: { [key: string]: number } = {};
-    data.forEach((call) => {
-      const detail = call.status_detail || "N/A";
-      statusCounts[detail] = (statusCounts[detail] || 0) + 1;
-    });
+    // If no status is selected, show breakdown by status_detail
+    if (!selectedStatus) {
+      const statusCounts: { [key: string]: number } = {};
+      data.forEach((call) => {
+        const detail = call.status_detail || "N/A";
+        statusCounts[detail] = (statusCounts[detail] || 0) + 1;
+      });
+      return Object.entries(statusCounts)
+        .map(([name, count]) => ({ name, size: count }))
+        .sort((a, b) => b.size - a.size);
+    }
 
-    return Object.entries(statusCounts)
-      .map(([name, count]) => ({ name, size: count }))
+    // If a status is selected, show breakdown by agent for that status
+    const agentCounts: { [key: string]: number } = {};
+    data
+      .filter(call => (call.status_detail || "N/A") === selectedStatus)
+      .forEach(call => {
+        const agent = call.agent || "Unassigned";
+        agentCounts[agent] = (agentCounts[agent] || 0) + 1;
+      });
+    return Object.entries(agentCounts)
+      .map(([name, count]) => ({ name, size: count, isAgent: true }))
       .sort((a, b) => b.size - a.size);
-  }, [data]);
 
-  const agentsForSelectedStatus = useMemo(() => {
-    if (!selectedStatus) return [];
-    const agentSet = new Set<string>();
-    data.forEach(call => {
-      if ((call.status_detail || "N/A") === selectedStatus && call.agent) {
-        agentSet.add(call.agent);
-      }
-    });
-    return Array.from(agentSet).sort();
   }, [data, selectedStatus]);
+
 
   const filteredCalls = useMemo(() => {
     return data.filter(call => {
@@ -103,13 +109,13 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
 
   const handleTreemapClick = (item: any) => {
     if (item && item.name) {
-      if (selectedStatus === item.name) {
-        // If clicking the same status, reset everything
-        setSelectedStatus(null);
-        setSelectedAgent(null);
+      if (item.isAgent) {
+        // If we're in agent view, clicking an agent sets the agent filter
+        setSelectedAgent(prev => prev === item.name ? null : item.name);
       } else {
+        // If we're in status view, clicking a status drills down
         setSelectedStatus(item.name);
-        setSelectedAgent(null); // Reset agent when status changes
+        setSelectedAgent(null); // Reset agent filter when status changes
       }
     }
   };
@@ -130,17 +136,31 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
     setSelectedStatus(null);
     setSelectedAgent(null);
   };
+  
+  const goBackToStatusView = () => {
+      setSelectedStatus(null);
+      setSelectedAgent(null);
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Call Status Breakdown</CardTitle>
         <CardDescription>
-          Distribution des résultats d'appel détaillés. Cliquez sur un carré pour filtrer la liste ci-dessous.
+          {selectedStatus 
+           ? `Distribution for status: ${selectedStatus}. Click on an agent to filter the list.`
+           : "Distribution of detailed call outcomes. Click on a square to drill down."
+          }
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="w-full h-[400px]">
+          {selectedStatus && (
+              <Button variant="ghost" size="sm" onClick={goBackToStatusView} className="mb-2">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to all statuses
+              </Button>
+          )}
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
@@ -158,31 +178,11 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
             </ResponsiveContainer>
           ) : (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p>No data to display.</p>
+              <p>No data to display for this selection.</p>
             </div>
           )}
         </div>
         
-        {selectedStatus && agentsForSelectedStatus.length > 0 && (
-            <div className="p-4 border rounded-lg bg-muted/50">
-                <h4 className="mb-2 text-sm font-semibold">
-                    Filter by agent for status: <span className="font-bold">{selectedStatus}</span>
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                    {agentsForSelectedStatus.map(agent => (
-                        <Button
-                            key={agent}
-                            size="sm"
-                            variant={selectedAgent === agent ? "default" : "outline"}
-                            onClick={() => setSelectedAgent(prev => prev === agent ? null : agent)}
-                        >
-                            {agent}
-                        </Button>
-                    ))}
-                </div>
-            </div>
-        )}
-
         <div>
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-semibold">
@@ -193,7 +193,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
             </h4>
             {(selectedStatus || selectedAgent) && (
               <Button variant="ghost" onClick={clearFilters}>
-                Clear filters
+                Clear all filters
               </Button>
             )}
           </div>
