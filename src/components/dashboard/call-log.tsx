@@ -43,8 +43,8 @@ export default function CallLog({ data }: { data: CallData[] }) {
       .filter(
         (call) =>
           call.calling_number.includes(filter) ||
-          call.agent?.toLowerCase().includes(filter.toLowerCase()) ||
-          call.queue_name.toLowerCase().includes(filter.toLowerCase())
+          (call.agent || "").toLowerCase().includes(filter.toLowerCase()) ||
+          (call.queue_name || "").toLowerCase().includes(filter.toLowerCase())
       );
   }, [data, filter, statusFilter]);
 
@@ -132,9 +132,9 @@ export default function CallLog({ data }: { data: CallData[] }) {
                     <TableCell className="font-medium">
                       {call.calling_number}
                     </TableCell>
-                    <TableCell>{call.queue_name}</TableCell>
+                    <TableCell>{call.queue_name || "N/A"}</TableCell>
                     <TableCell>{call.agent || "N/A"}</TableCell>
-                    <TableCell>{call.time_in_queue_seconds}s</TableCell>
+                    <TableCell>{call.time_in_queue_seconds || 0}s</TableCell>
                     <TableCell>{call.processing_time_seconds}s</TableCell>
                     <TableCell className="text-right">
                       <Badge variant={getStatusVariant(call.status)}>

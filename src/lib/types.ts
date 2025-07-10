@@ -2,20 +2,20 @@ export type CallData = {
   enter_datetime: string;
   enter_hour: number;
   enter_year: number;
-  enter_month: number;
-  time_in_queue_seconds: number;
+  enter_month: number | string;
+  time_in_queue_seconds?: number;
   processing_time_seconds: number;
-  less_than_30s_waittime: number | null;
-  less_than_60s_waittime: number | null;
-  less_than_120s_waittime: number | null;
+  less_than_30s_waittime?: number | null;
+  less_than_60s_waittime?: number | null;
+  less_than_120s_waittime?: number | null;
   version: number;
   call_id: string;
-  queue_name: string;
+  queue_name?: string;
   enter_date: string;
   enter_time: string;
   enter_weekday: string;
   calling_number: string;
-  calling_forward: string | null;
+  calling_forward?: string | null;
   agent: string | null;
   status: "Completed" | "Abandoned" | "Redirected" | "Direct call";
   status_detail: string;
@@ -24,7 +24,7 @@ export type CallData = {
   internal_call: "Yes" | "No";
   agent_id: string | null;
   agent_number: string | null;
-  parent_call_id: string | null;
+  parent_call_id?: string | null;
 };
 
 export type AgentStatusData = {

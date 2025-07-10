@@ -13,7 +13,7 @@ export default function MetricsDashboard({ data }: MetricsDashboardProps) {
     const answeredCalls = data.filter((call) => call.status === "Completed");
 
     const totalQueueTime = data.reduce(
-      (acc, call) => acc + call.time_in_queue_seconds,
+      (acc, call) => acc + (call.time_in_queue_seconds || 0),
       0
     );
     const avgQueueTime =
@@ -21,7 +21,7 @@ export default function MetricsDashboard({ data }: MetricsDashboardProps) {
 
     const calculateServiceLevel = (seconds: 30 | 60 | 120) => {
       const key = `less_than_${seconds}s_waittime` as const;
-      const relevantCalls = data.filter((call) => call[key] !== null);
+      const relevantCalls = data.filter((call) => call[key] != null);
       if (relevantCalls.length === 0) return 0;
       const withinThreshold = relevantCalls.filter(
         (call) => call[key] === 1
@@ -30,7 +30,6 @@ export default function MetricsDashboard({ data }: MetricsDashboardProps) {
     };
 
     const sl30 = calculateServiceLevel(30);
-    const sl60 = calculateServiceLevel(60);
 
     return {
       totalCalls,
