@@ -36,15 +36,22 @@ export default function CallLog({ data }: { data: CallData[] }) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const filteredData = useMemo(() => {
-    return data
+    const sortedData = [...data].sort((a, b) => new Date(b.enter_datetime).getTime() - new Date(a.enter_datetime).getTime());
+    
+    const lowercasedFilter = filter.toLowerCase();
+
+    return sortedData
       .filter((call) =>
         statusFilter === "all" ? true : call.status.trim().toLowerCase() === statusFilter.trim().toLowerCase()
       )
       .filter(
-        (call) =>
-          call.calling_number.toLowerCase().includes(filter.toLowerCase()) ||
-          (call.agent || "").toLowerCase().includes(filter.toLowerCase()) ||
-          (call.queue_name || "").toLowerCase().includes(filter.toLowerCase())
+        (call) => {
+          if (!filter) return true;
+          // Check all relevant fields for a match
+          return Object.values(call).some(value => 
+            value && value.toString().toLowerCase().includes(lowercasedFilter)
+          );
+        }
       );
   }, [data, filter, statusFilter]);
 
@@ -80,7 +87,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input
-            placeholder="Filter by number, agent, or queue..."
+            placeholder="Filter across all columns..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);

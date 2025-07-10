@@ -33,11 +33,26 @@ export default function AgentStatusLog({ data }: AgentStatusLogProps) {
 
   const filteredData = useMemo(() => {
     if (!data) return [];
-    return data.filter(
-      (item) =>
-        (item.user || "").toLowerCase().includes(filter.toLowerCase()) ||
-        (item.email || "").toLowerCase().includes(filter.toLowerCase()) ||
-        (item.queuename || "").toLowerCase().includes(filter.toLowerCase())
+    
+    const sortedData = [...data].sort((a, b) => {
+        const dateA = new Date(`${a.date}T${String(a.hour).padStart(2, '0')}:00:00`);
+        const dateB = new Date(`${b.date}T${String(b.hour).padStart(2, '0')}:00:00`);
+        return dateB.getTime() - dateA.getTime();
+    });
+
+    if (!filter) {
+        return sortedData;
+    }
+    
+    const lowercasedFilter = filter.toLowerCase();
+
+    return sortedData.filter(
+      (item) => {
+        // Check all relevant fields for a match
+        return Object.values(item).some(value => 
+            value && value.toString().toLowerCase().includes(lowercasedFilter)
+        );
+      }
     );
   }, [data, filter]);
 
@@ -73,7 +88,7 @@ export default function AgentStatusLog({ data }: AgentStatusLogProps) {
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input
-            placeholder="Filter by agent, email, or queue..."
+            placeholder="Filter across all columns..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);

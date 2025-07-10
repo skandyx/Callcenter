@@ -35,12 +35,20 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   const [currentPage, setCurrentPage] = useState(1);
   
   const filteredData = useMemo(() => {
-    return data.filter(
-      (item) =>
-        item.calling_number.toLowerCase().includes(filter.toLowerCase()) ||
-        (item.agent || "").toLowerCase().includes(filter.toLowerCase()) ||
-        (item.queue_name || "").toLowerCase().includes(filter.toLowerCase())
-    );
+    const sortedData = [...data].sort((a, b) => new Date(b.enter_datetime).getTime() - new Date(a.enter_datetime).getTime());
+
+    if (!filter) {
+      return sortedData;
+    }
+
+    const lowercasedFilter = filter.toLowerCase();
+
+    return sortedData.filter((item) => {
+      // Check all relevant fields for a match
+      return Object.values(item).some(value => 
+        value && value.toString().toLowerCase().includes(lowercasedFilter)
+      );
+    });
   }, [data, filter]);
 
   const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
@@ -85,7 +93,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
         </CardDescription>
         <div className="flex flex-col gap-4 pt-4 md:flex-row md:items-center">
           <Input
-            placeholder="Filter by number, agent, or queue..."
+            placeholder="Filter across all columns..."
             value={filter}
             onChange={(e) => {
               setFilter(e.target.value);
