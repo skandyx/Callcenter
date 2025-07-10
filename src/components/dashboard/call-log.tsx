@@ -42,7 +42,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
       )
       .filter(
         (call) =>
-          call.calling_number.includes(filter) ||
+          call.calling_number.toLowerCase().includes(filter.toLowerCase()) ||
           (call.agent || "").toLowerCase().includes(filter.toLowerCase()) ||
           (call.queue_name || "").toLowerCase().includes(filter.toLowerCase())
       );
@@ -113,6 +113,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Caller</TableHead>
                 <TableHead>Queue</TableHead>
@@ -126,6 +127,9 @@ export default function CallLog({ data }: { data: CallData[] }) {
               {paginatedData.length > 0 ? (
                 paginatedData.map((call, index) => (
                   <TableRow key={`${call.call_id}-${index}`}>
+                     <TableCell>
+                      {new Date(call.enter_datetime).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       {new Date(call.enter_datetime).toLocaleTimeString()}
                     </TableCell>
@@ -146,7 +150,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="h-24 text-center text-muted-foreground"
                   >
                     No results found.

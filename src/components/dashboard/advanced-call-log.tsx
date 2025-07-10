@@ -125,7 +125,7 @@ export default function AdvancedCallLog() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Call ID</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Caller</TableHead>
                 <TableHead>Queue</TableHead>
@@ -138,7 +138,9 @@ export default function AdvancedCallLog() {
               {paginatedData.length > 0 ? (
                 paginatedData.map((item, index) => (
                   <TableRow key={`${item.call_id}-${index}`}>
-                     <TableCell className="font-mono text-xs">{item.call_id}</TableCell>
+                    <TableCell>
+                      {new Date(item.enter_datetime).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       {new Date(item.enter_datetime).toLocaleTimeString()}
                     </TableCell>
