@@ -9,6 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { ArrowLeft } from 'lucide-react';
+
 
 const countryPrefixes: { [key: string]: { code: string, name: string } } = {
   '1': { code: 'CAN', name: 'Canada' },
@@ -37,17 +39,6 @@ const getCountryInfoFromNumber = (phoneNumber: string): { code: string, name: st
   return null;
 };
 
-interface CallStats {
-  received: number;
-  emitted: number;
-  totalDuration: number; // in seconds
-  countryName: string;
-}
-
-interface WorldMapChartProps {
-  data: CallData[];
-}
-
 const COLORS = [
   '#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe', '#00c49f', '#ffbb28', '#ff7300'
 ];
@@ -60,9 +51,9 @@ const CustomizedTreemapContent = ({ root, depth, x, y, width, height, index, nam
     <g>
       <rect
         x={x} y={y} width={width} height={height}
-        style={{ fill: COLORS[index % COLORS.length], stroke: '#fff', strokeWidth: 2 }}
+        style={{ fill: COLORS[index % COLORS.length], stroke: '#fff', strokeWidth: 2, cursor: 'pointer' }}
       />
-      <text x={x + width / 2} y={y + height / 2 + 7} textAnchor="middle" fill="#fff" fontSize={14}>
+      <text x={x + width / 2} y={y + height / 2 + 7} textAnchor="middle" fill="#fff" fontSize={14} style={{ pointerEvents: 'none' }}>
         {name} ({size})
       </text>
     </g>
@@ -70,55 +61,52 @@ const CustomizedTreemapContent = ({ root, depth, x, y, width, height, index, nam
 };
 
 
-const WorldMapChart = ({ data }: WorldMapChartProps) => {
+const WorldMapChart = ({ data }: { data: CallData[] }) => {
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
-  const callCountsByCountry = useMemo(() => {
-    const counts: { [key: string]: CallStats } = {};
-    data.forEach(call => {
-      const countryInfo = getCountryInfoFromNumber(call.calling_number);
-      if (countryInfo) {
-        if (!counts[countryInfo.code]) {
-          counts[countryInfo.code] = { received: 0, emitted: 0, totalDuration: 0, countryName: countryInfo.name };
-        }
-        
-        const isEmitted = call.status_detail === 'Outgoing';
-
-        if (isEmitted) {
-          counts[countryInfo.code].emitted += 1;
-        } else {
-          counts[countryInfo.code].received += 1;
-        }
-
-        counts[countryInfo.code].totalDuration += call.processing_time_seconds || 0;
-      }
-    });
-    return counts;
-  }, [data]);
-  
   const treemapData = useMemo(() => {
-    return Object.entries(callCountsByCountry)
-      .map(([code, stats]) => ({
-        name: stats.countryName,
-        code: code,
-        size: stats.received + stats.emitted,
-      }))
-      .filter(c => c.size > 0)
-      .sort((a, b) => b.size - a.size);
-  }, [callCountsByCountry]);
+    // If no country is selected, show breakdown by country
+    if (!selectedCountryCode) {
+        const counts: { [key: string]: { name: string, code: string, size: number } } = {};
+        data.forEach(call => {
+            const countryInfo = getCountryInfoFromNumber(call.calling_number);
+            if (countryInfo) {
+                if (!counts[countryInfo.code]) {
+                    counts[countryInfo.code] = { name: countryInfo.name, code: countryInfo.code, size: 0 };
+                }
+                counts[countryInfo.code].size += 1;
+            }
+        });
+        return Object.values(counts)
+            .filter(c => c.size > 0)
+            .sort((a, b) => b.size - a.size);
+    }
+    
+    // If a country is selected, show breakdown by agent for that country
+    const agentCounts: { [key: string]: number } = {};
+    data
+      .filter(call => {
+          const countryInfo = getCountryInfoFromNumber(call.calling_number);
+          return countryInfo?.code === selectedCountryCode;
+      })
+      .forEach(call => {
+        const agent = call.agent || "Unassigned";
+        agentCounts[agent] = (agentCounts[agent] || 0) + 1;
+      });
 
-  const agentsForSelectedCountry = useMemo(() => {
-    if (!selectedCountryCode) return [];
-    const agentSet = new Set<string>();
-    data.forEach(call => {
-      const countryInfo = getCountryInfoFromNumber(call.calling_number);
-      if (countryInfo?.code === selectedCountryCode && call.agent) {
-        agentSet.add(call.agent);
-      }
-    });
-    return Array.from(agentSet).sort();
+    return Object.entries(agentCounts)
+      .map(([name, count]) => ({ name, size: count, isAgent: true }))
+      .sort((a, b) => b.size - a.size);
+
   }, [data, selectedCountryCode]);
+
+  const selectedCountryName = useMemo(() => {
+    if (!selectedCountryCode) return null;
+    const countryEntry = Object.values(countryPrefixes).find(c => c.code === selectedCountryCode);
+    return countryEntry ? countryEntry.name : selectedCountryCode;
+  }, [selectedCountryCode]);
+
   
   const filteredCalls = useMemo(() => {
     return data.filter(call => {
@@ -130,14 +118,15 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
   }, [data, selectedCountryCode, selectedAgent]);
 
   const handleTreemapClick = (item: any) => {
-    if (item && item.code) {
-        if (selectedCountryCode === item.code) {
-            setSelectedCountryCode(null);
-            setSelectedAgent(null);
-        } else {
-            setSelectedCountryCode(item.code);
-            setSelectedAgent(null);
-        }
+    if (item && item.name) {
+      if (item.isAgent) {
+        // If we're in agent view, clicking an agent sets the agent filter for the table
+        setSelectedAgent(prev => prev === item.name ? null : item.name);
+      } else {
+        // If we're in country view, clicking a country drills down into agent view
+        setSelectedCountryCode(item.code);
+        setSelectedAgent(null); // Reset agent filter when country changes
+      }
     }
   };
   
@@ -156,19 +145,33 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
   const clearFilters = () => {
     setSelectedCountryCode(null);
     setSelectedAgent(null);
-  }
+  };
+  
+  const goBackToCountryView = () => {
+      setSelectedCountryCode(null);
+      setSelectedAgent(null);
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Call Distribution by Country</CardTitle>
         <CardDescription>
-          Visualisation géographique des appels. Cliquez sur un pays pour filtrer le journal d'appels.
+          {selectedCountryCode
+            ? `Distribution for country: ${selectedCountryName}. Click an agent to filter the list below.`
+            : "Geographic call distribution. Click a country to see agent breakdown."
+          }
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="w-full h-[400px]">
-          <h4 className="text-lg font-semibold mb-2 text-center">Summary by Country</h4>
+          {selectedCountryCode && (
+              <Button variant="ghost" size="sm" onClick={goBackToCountryView} className="mb-2">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to all countries
+              </Button>
+          )}
+          {treemapData.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <Treemap
                 data={treemapData}
@@ -181,36 +184,24 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
                 onClick={handleTreemapClick}
                 isAnimationActive={false}
               >
-                  <RechartsTooltip formatter={(value, name) => [value, `Total Calls`]}/>
+                  <RechartsTooltip formatter={(value, name, props) => [
+                    value,
+                    props.payload.isAgent ? 'Total Calls' : 'Total Calls'
+                  ]}/>
               </Treemap>
             </ResponsiveContainer>
-        </div>
-
-        {selectedCountryCode && agentsForSelectedCountry.length > 0 && (
-            <div className="p-4 border rounded-lg bg-muted/50">
-                <h4 className="mb-2 text-sm font-semibold">
-                    Filter by agent for country: <span className="font-bold">{callCountsByCountry[selectedCountryCode]?.countryName}</span>
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                    {agentsForSelectedCountry.map(agent => (
-                        <Button
-                            key={agent}
-                            size="sm"
-                            variant={selectedAgent === agent ? "default" : "outline"}
-                            onClick={() => setSelectedAgent(prev => prev === agent ? null : agent)}
-                        >
-                            {agent}
-                        </Button>
-                    ))}
-                </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p>No data to display for this selection.</p>
             </div>
-        )}
+          )}
+        </div>
 
         <div>
            <div className="flex items-center justify-between mb-4">
              <h4 className="text-lg font-semibold">
                Call Log
-               {selectedCountryCode && ` (Filtered by: ${callCountsByCountry[selectedCountryCode]?.countryName || selectedCountryCode}`}
+               {selectedCountryCode && ` (Filtered by: ${selectedCountryName}`}
                {selectedAgent && ` & ${selectedAgent}`}
                {selectedCountryCode && `)`}
              </h4>
@@ -237,7 +228,12 @@ const WorldMapChart = ({ data }: WorldMapChartProps) => {
                     {filteredCalls.length > 0 ? filteredCalls.map((call) => (
                         <TableRow key={call.call_id}>
                             <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
-                            <TableCell>{call.calling_number}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                {selectedAgent === call.agent && <Badge variant={selectedAgent === call.agent ? "default" : "secondary" } className="mr-2">{call.agent}</Badge> }
+                                <span>{call.calling_number}</span>
+                              </div>
+                            </TableCell>
                             <TableCell>{call.agent || "N/A"}</TableCell>
                             <TableCell>{call.queue_name || "Direct call"}</TableCell>
                             <TableCell><Badge variant={getStatusVariant(call.status)}>{call.status}</Badge></TableCell>
