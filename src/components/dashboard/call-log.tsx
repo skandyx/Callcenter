@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -138,12 +139,12 @@ export default function CallLog({ data }: { data: CallData[] }) {
                       {new Date(call.enter_datetime).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      {new Date(call.enter_datetime).toLocaleTimeString()}
+                      {new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                     </TableCell>
                     <TableCell className="font-medium">
                       {call.calling_number}
                     </TableCell>
-                    <TableCell>{call.queue_name || "N/A"}</TableCell>
+                    <TableCell>{call.queue_name || "Direct call"}</TableCell>
                     <TableCell>{call.agent || "N/A"}</TableCell>
                     <TableCell>{call.time_in_queue_seconds || 0}s</TableCell>
                     <TableCell>{call.processing_time_seconds || 0}s</TableCell>

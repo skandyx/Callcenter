@@ -23,6 +23,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from "@/lib/utils";
+import { ArrowRightLeft } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+
 
 const ROWS_PER_PAGE = 10;
 
@@ -47,34 +50,47 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
     data.forEach(call => {
       const parentId = call.parent_call_id || call.call_id;
       if (!callGroups[parentId]) {
-        callGroups[parentId] = { parent: call, children: [] };
+        // Find the ultimate parent in the dataset
+        let ultimateParent = call;
+        let currentCall = call;
+        const visitedIds = new Set();
+        while(currentCall.parent_call_id && !visitedIds.has(currentCall.call_id)) {
+            visitedIds.add(currentCall.call_id);
+            const parentInData = data.find(p => p.call_id === currentCall.parent_call_id);
+            if (parentInData) {
+                ultimateParent = parentInData;
+                currentCall = parentInData;
+            } else {
+                break;
+            }
+        }
+        callGroups[ultimateParent.call_id] = { parent: ultimateParent, children: [] };
       }
     });
 
     // Second pass: correctly assign parents and children
     const finalGroups: { [key: string]: GroupedCall } = {};
     data.forEach(call => {
-      const isParent = !call.parent_call_id;
-      if (isParent) {
-        if (!finalGroups[call.call_id]) {
-          finalGroups[call.call_id] = { parent: call, children: [] };
-        } else {
-          // It was already created as a placeholder, now set the correct parent
-          finalGroups[call.call_id].parent = call;
+        let ultimateParent = call;
+        let currentCall = call;
+        const visitedIds = new Set();
+        while(currentCall.parent_call_id && !visitedIds.has(currentCall.call_id)) {
+            visitedIds.add(currentCall.call_id);
+            const parentInData = data.find(p => p.call_id === currentCall.parent_call_id);
+            if (parentInData) {
+                ultimateParent = parentInData;
+                currentCall = parentInData;
+            } else {
+                break;
+            }
         }
-      } else { // It's a child
-        const rootParent = data.find(p => p.call_id === call.parent_call_id);
-        const rootParentId = rootParent?.parent_call_id || rootParent?.call_id || call.parent_call_id!;
-        
-        if (!finalGroups[rootParentId]) {
-           // Parent might not be in the data set, so create a placeholder
-           const bestParent = rootParent || call;
-           finalGroups[rootParentId] = { parent: bestParent, children: [] };
+
+        if (!finalGroups[ultimateParent.call_id]) {
+          finalGroups[ultimateParent.call_id] = { parent: ultimateParent, children: [] };
         }
-        if (finalGroups[rootParentId].parent.call_id !== call.call_id){
-           finalGroups[rootParentId].children.push(call);
+        if (ultimateParent.call_id !== call.call_id) {
+          finalGroups[ultimateParent.call_id].children.push(call);
         }
-      }
     });
 
     // Sort children by date within each group
@@ -82,15 +98,11 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
       group.children.sort((a, b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
     });
 
-    // Flatten the groups for rendering and filtering
-    const flatList: (AdvancedCallData & { isChild?: boolean; isFirstChild?: boolean, hasChildren?: boolean })[] = [];
-    Object.values(finalGroups)
+    const flatList = Object.values(finalGroups)
       .sort((a, b) => new Date(b.parent.enter_datetime).getTime() - new Date(a.parent.enter_datetime).getTime())
-      .forEach(group => {
-        flatList.push({...group.parent, hasChildren: group.children.length > 0});
-        group.children.forEach((child, index) => {
-          flatList.push({ ...child, isChild: true, isFirstChild: index === 0 });
-        });
+      .flatMap(group => {
+         const children = group.children.map((child, index) => ({...child, isChild: true, isFirstChild: index === 0}));
+         return [{...group.parent, hasChildren: group.children.length > 0}, ...children];
       });
 
     if (!filter) {
@@ -99,7 +111,6 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
     
     const lowercasedFilter = filter.toLowerCase();
 
-    // Filter based on the parent of each group
     return Object.values(finalGroups)
       .filter(group => {
         const parentMatch = Object.values(group.parent).some(val => val?.toString().toLowerCase().includes(lowercasedFilter));
@@ -129,6 +140,11 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
       default: return "secondary";
     }
   };
+
+  const findParent = (parentId: string | null | undefined) => {
+    if (!parentId) return null;
+    return data.find(c => c.call_id === parentId) || null;
+  }
 
   if (!data) {
       return (
@@ -183,7 +199,9 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
               </TableHeader>
               <TableBody>
                 {paginatedData.length > 0 ? (
-                  paginatedData.map((item, index) => (
+                  paginatedData.map((item, index) => {
+                    const parentCall = findParent(item.parent_call_id);
+                    return (
                     <TableRow 
                       key={`${item.call_id}-${index}`}
                       className={cn(!item.isChild && item.hasChildren && "bg-muted/50")}
@@ -198,25 +216,40 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                           )}
                            <div className={cn("flex-1", item.isChild && "pl-0")}>
                               <div>{new Date(item.enter_datetime).toLocaleDateString()}</div>
-                              <div className="text-muted-foreground text-xs">{new Date(item.enter_datetime).toLocaleTimeString()}</div>
+                              <div className="text-muted-foreground text-xs">{new Date(item.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</div>
                            </div>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium align-top">
-                        {item.calling_number}
+                        <div className="flex items-center gap-2">
+                          <span>{item.calling_number}</span>
+                          {item.parent_call_id && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Transfert de : {parentCall?.calling_number || "Inconnu"}</p>
+                                  <p className="text-xs text-muted-foreground">ID: {item.parent_call_id}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
                       </TableCell>
-                      <TableCell className="align-top">{item.queue_name || "N/A"}</TableCell>
+                      <TableCell className="align-top">{item.queue_name || "Direct call"}</TableCell>
                       <TableCell className="align-top">{item.agent || "N/A"}</TableCell>
                       <TableCell className="align-top">
                         <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
                       </TableCell>
                       <TableCell className="align-top">{item.status_detail}</TableCell>
-                      <TableCell className="align-top">{item.processing_time_seconds || 0}s</TableCell>
+                      <TableCell className="align-top">{item.processing_time_seconds ?? 0}s</TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground align-top">
                         {item.call_id}
                       </TableCell>
                     </TableRow>
-                  ))
+                  )})
                 ) : (
                   <TableRow>
                     <TableCell
