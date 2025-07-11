@@ -114,7 +114,7 @@ const Wallboard = () => {
           ) : (
           <>
             <TabsContent value="queues" className="flex-1 mt-4">
-              <QueueWallboard agentStatusData={agentStatusData} />
+              <QueueWallboard agentStatusData={agentStatusData} advancedCallData={advancedCallData} />
             </TabsContent>
             <TabsContent value="agents" className="flex-1 mt-4">
               <UserWallboard advancedCallData={advancedCallData} />

@@ -15,29 +15,71 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
 
   const agentStats = useMemo(() => {
     if (!advancedCallData) return {};
-    const stats: { [key: string]: { missedCalls: number } } = {};
     
+    const stats: { [key: string]: { 
+        name: string,
+        status: string,
+        timeInStatus: string,
+        callsAnswered: number,
+        callsOut: number,
+        avgTalkTime: string,
+        totalTalkTime: number,
+        missedCalls: number 
+    } } = {};
+
+    const agentNames = new Set(advancedCallData.map(d => d.agent).filter((a): a is string => !!a));
+
+    agentNames.forEach(name => {
+        stats[name] = {
+            name: name,
+            status: "Available", // Mocked for now
+            timeInStatus: "0s", // Mocked for now
+            callsAnswered: 0,
+            callsOut: 0,
+            avgTalkTime: "0s",
+            totalTalkTime: 0,
+            missedCalls: 0
+        };
+    });
+
     advancedCallData.forEach(call => {
-        if (call.agent) {
-            if (!stats[call.agent]) {
-                stats[call.agent] = { missedCalls: 0 };
+        if (call.agent && stats[call.agent]) {
+            const agentStat = stats[call.agent];
+            
+            if (call.status === 'Completed') {
+                if(call.status_detail.toLowerCase().includes('incoming')) {
+                    agentStat.callsAnswered++;
+                } else if (call.status_detail.toLowerCase().includes('outgoing')) {
+                    agentStat.callsOut++;
+                }
+            } else if (call.status === 'Abandoned' && call.status_detail && call.status_detail.toLowerCase().includes('missed')) {
+                agentStat.missedCalls++;
             }
-            if (call.status === 'Abandoned' && call.status_detail.toLowerCase().includes('missed')) {
-                stats[call.agent].missedCalls++;
+            
+            if (call.processing_time_seconds) {
+                agentStat.totalTalkTime += call.processing_time_seconds;
             }
         }
     });
 
+    // Calculate Average Talk Time
+    Object.values(stats).forEach(agentStat => {
+        const totalCalls = agentStat.callsAnswered + agentStat.callsOut;
+        if(totalCalls > 0) {
+            const avgSeconds = Math.round(agentStat.totalTalkTime / totalCalls);
+            const minutes = Math.floor(avgSeconds / 60);
+            const seconds = avgSeconds % 60;
+            agentStat.avgTalkTime = `${minutes}m ${seconds}s`;
+        } else {
+            agentStat.avgTalkTime = "0m 0s";
+        }
+    });
+
+
     return stats;
   }, [advancedCallData]);
 
-  // Mock data for demonstration purposes
-  const agents = [
-    { name: "Luffy Monkey D", status: "In Call", timeInStatus: "2m 15s", callsAnswered: 15, callsOut: 5, avgTalkTime: "3m 45s", totalTalkTime: "56m 15s" },
-    { name: "Zoro Roronoa", status: "Available", timeInStatus: "1m 30s", callsAnswered: 12, callsOut: 2, avgTalkTime: "4m 10s", totalTalkTime: "50m 00s" },
-    { name: "Alex 777", status: "Wrap-up", timeInStatus: "0m 45s", callsAnswered: 20, callsOut: 8, avgTalkTime: "2m 55s", totalTalkTime: "58m 20s" },
-    { name: "Sanji Vinsmoke", status: "Away", timeInStatus: "10m 05s", callsAnswered: 10, callsOut: 1, avgTalkTime: "5m 02s", totalTalkTime: "50m 20s" }
-  ];
+  const agents = Object.values(agentStats);
 
   const headerIcons = [
     { Icon: User, label: "Statut" },
@@ -46,7 +88,7 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
     { Icon: PhoneOutgoing, label: "Appels Sortants" },
     { Icon: PhoneMissed, label: "Appels Manqués" },
     { Icon: Clock, label: "Temps Com. Moyen" },
-    { Icon: BarChart, label: "Temps Com. Total" },
+    { Icon: BarChart, label: "Temps Com. Total (sec)" },
   ];
   
   const getStatusColor = (status: string) => {
@@ -73,7 +115,7 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
 
       {/* Agent Rows */}
       <div className="space-y-3 flex-1">
-          {agents.map((agent, agentIndex) => (
+          {agents.length > 0 ? agents.map((agent, agentIndex) => (
               <div key={agentIndex} className="grid grid-cols-[2.5fr_repeat(7,_1fr)] gap-2 items-center">
                   <div className="bg-gray-800 rounded-lg p-4 h-full flex flex-col justify-center">
                       <div className="text-2xl font-bold">{agent.name}</div>
@@ -84,11 +126,15 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
                    <MetricBox value={agent.timeInStatus} />
                    <MetricBox value={agent.callsAnswered} />
                    <MetricBox value={agent.callsOut} />
-                   <MetricBox value={agentStats[agent.name]?.missedCalls || 0} isAlert={(agentStats[agent.name]?.missedCalls || 0) > 0} />
+                   <MetricBox value={agent.missedCalls} isAlert={agent.missedCalls > 0} />
                    <MetricBox value={agent.avgTalkTime} />
                    <MetricBox value={agent.totalTalkTime} />
               </div>
-          ))}
+          )) : (
+             <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg">
+                <p className="text-gray-400">Aucune donnée d'agent à afficher.</p>
+            </div>
+          )}
       </div>
 
       <footer className="mt-8 shrink-0">

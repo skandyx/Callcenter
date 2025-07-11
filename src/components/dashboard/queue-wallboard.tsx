@@ -3,20 +3,56 @@
 
 import React, { useMemo } from 'react';
 import { Headset, Phone, Clock, Check, PhoneMissed, Star, Users } from 'lucide-react';
-import { type AgentStatusData } from '@/lib/types';
+import { type AgentStatusData, type AdvancedCallData } from '@/lib/types';
 
 
 interface QueueWallboardProps {
     agentStatusData: AgentStatusData[];
+    advancedCallData: AdvancedCallData[];
 }
 
-const QueueWallboard = ({ agentStatusData }: QueueWallboardProps) => {
+const QueueWallboard = ({ agentStatusData, advancedCallData }: QueueWallboardProps) => {
 
-  const agentsPerQueue = useMemo(() => {
-    if (!agentStatusData) return {};
-    const queueAgentCount: { [key: string]: number } = {};
-    
-    // Use the most recent status data for each agent per queue to determine if they are logged in
+  const queueStats = useMemo(() => {
+    if (!advancedCallData || !agentStatusData) return {};
+
+    const stats: { [key: string]: { 
+        name: string,
+        status: string, // For now, always "Open" if data exists
+        inQueue: number,
+        currentWait: string,
+        avgWait: string,
+        received: number,
+        missed: number,
+        serviceLevel: string,
+        connectedAgents: number
+     } } = {};
+
+    // 1. Get all unique queue names from both datasets
+    const queueNames = new Set([
+        ...agentStatusData.map(d => d.queuename),
+        ...advancedCallData.map(d => d.queue_name).filter((q): q is string => !!q)
+    ]);
+
+
+    // 2. Initialize stats for each queue
+    queueNames.forEach(name => {
+        if (name) {
+            stats[name] = {
+                name: name,
+                status: "Open",
+                inQueue: 0, // Mocked for now
+                currentWait: "0s", // Mocked for now
+                avgWait: "0s", // Mocked for now
+                received: 0,
+                missed: 0,
+                serviceLevel: "100%", // Mocked for now
+                connectedAgents: 0
+            };
+        }
+    });
+
+    // 3. Calculate connected agents from agentStatusData
     const latestAgentStatus: { [key: string]: AgentStatusData } = {};
     agentStatusData.forEach(status => {
       const key = `${status.user_id}-${status.queuename}`;
@@ -27,24 +63,26 @@ const QueueWallboard = ({ agentStatusData }: QueueWallboardProps) => {
     });
 
     Object.values(latestAgentStatus).forEach(status => {
-        if (status.loggedIn > 0) { // Consider agent connected if loggedIn time is positive
-            if (!queueAgentCount[status.queuename]) {
-                queueAgentCount[status.queuename] = 0;
-            }
-            queueAgentCount[status.queuename]++;
+        if (stats[status.queuename] && status.loggedIn > 0) {
+            stats[status.queuename].connectedAgents++;
         }
     });
 
-    return queueAgentCount;
-  }, [agentStatusData]);
+    // 4. Calculate received and missed calls from advancedCallData
+    advancedCallData.forEach(call => {
+        if (call.queue_name && stats[call.queue_name]) {
+            if(call.status === "Completed") {
+                stats[call.queue_name].received++;
+            } else if (call.status === "Abandoned") {
+                stats[call.queue_name].missed++;
+            }
+        }
+    });
+
+    return stats;
+  }, [agentStatusData, advancedCallData]);
     
-  // Mock data for demonstration purposes
-  const queues = [
-    { name: "A-1", status: "Open", inQueue: 0, currentWait: "0s", avgWait: "0s", received: 0, missed: 0, serviceLevel: "100%" },
-    { name: "HELPDESK", status: "Open", inQueue: 0, currentWait: "0s", avgWait: "0s", received: 0, missed: 0, serviceLevel: "100%" },
-    { name: "Ventes", status: "Closed", inQueue: 3, currentWait: "1m 32s", avgWait: "45s", received: 25, missed: 2, serviceLevel: "92%" },
-    { name: "Support", status: "Open", inQueue: 1, currentWait: "22s", avgWait: "30s", received: 18, missed: 1, serviceLevel: "95%" }
-  ];
+  const queues = Object.values(queueStats);
 
   const headerIcons = [
     { Icon: Users, label: "Agents connectés" },
@@ -70,13 +108,13 @@ const QueueWallboard = ({ agentStatusData }: QueueWallboardProps) => {
 
       {/* Queue Rows */}
       <div className="space-y-3 flex-1">
-          {queues.map((queue, queueIndex) => (
+          {queues.length > 0 ? queues.map((queue, queueIndex) => (
               <div key={queueIndex} className="grid grid-cols-[2fr_repeat(7,_1fr)] gap-2 items-center">
                   <div className="bg-gray-800 rounded-lg p-4 h-full flex flex-col justify-center">
                       <div className="text-2xl font-bold">{queue.name}</div>
                       <div className="text-gray-400">{queue.status}</div>
                   </div>
-                   <MetricBox value={agentsPerQueue[queue.name] || 0} isHighlighted={(agentsPerQueue[queue.name] || 0) > 0} />
+                   <MetricBox value={queue.connectedAgents} isHighlighted={queue.connectedAgents > 0} />
                    <MetricBox value={queue.inQueue} isHighlighted={queue.inQueue > 0} />
                    <MetricBox value={queue.currentWait} />
                    <MetricBox value={queue.avgWait} />
@@ -84,7 +122,11 @@ const QueueWallboard = ({ agentStatusData }: QueueWallboardProps) => {
                    <MetricBox value={queue.missed} isAlert={queue.missed > 0} />
                    <MetricBox value={queue.serviceLevel} />
               </div>
-          ))}
+          )) : (
+            <div className="flex items-center justify-center h-full bg-gray-800 rounded-lg">
+                <p className="text-gray-400">Aucune donnée de file d'attente à afficher.</p>
+            </div>
+          )}
       </div>
 
       <footer className="mt-8 shrink-0">
