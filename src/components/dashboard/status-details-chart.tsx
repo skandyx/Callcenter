@@ -204,6 +204,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
              <Table>
                 <TableHeader className="sticky top-0 bg-background/95 backdrop-blur z-10">
                     <TableRow>
+                        <TableHead>Date</TableHead>
                         <TableHead>Time</TableHead>
                         <TableHead>Caller</TableHead>
                         <TableHead>Agent</TableHead>
@@ -215,6 +216,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
                 <TableBody>
                    {filteredCalls.length > 0 ? filteredCalls.map((call, index) => (
                        <TableRow key={`${call.call_id}-${index}`}>
+                           <TableCell>{new Date(call.enter_datetime).toLocaleDateString()}</TableCell>
                            <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
                            <TableCell>
                              <div className="flex items-center gap-2">
@@ -243,7 +245,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
                        </TableRow>
                    )) : (
                      <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                             No calls found for this filter combination.
                         </TableCell>
                      </TableRow>
