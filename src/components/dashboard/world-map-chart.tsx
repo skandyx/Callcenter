@@ -104,12 +104,10 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
 
   const selectedCountryName = useMemo(() => {
     if (!selectedCountryCode) return null;
-    if (selectedCountryCode === 'unknown') return 'Unknown';
-    // Find the country name from the treemap data to ensure it's correct
     const countryData = treemapData.find(item => !item.isAgent && item.code === selectedCountryCode);
     if(countryData) return countryData.name;
     const countryEntry = Object.values(countryPrefixes).find(c => c.code === selectedCountryCode);
-    return countryEntry ? countryEntry.name : selectedCountryCode;
+    return countryEntry ? countryEntry.name : 'Unknown';
   }, [selectedCountryCode, treemapData]);
 
   
@@ -124,14 +122,13 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
   }, [data, selectedCountryCode, selectedAgent]);
 
   const handleTreemapClick = (item: any) => {
-    if (item && item.payload) { 
-        const payload = item.payload;
-        if (payload.isAgent) {
-            setSelectedAgent(prev => prev === payload.name ? null : payload.name);
-        } else {
-            setSelectedCountryCode(payload.code);
-            setSelectedAgent(null); 
-        }
+    if (item && item.name) {
+      if (item.isAgent) {
+        setSelectedAgent(prev => prev === item.name ? null : item.name);
+      } else {
+        setSelectedCountryCode(item.code);
+        setSelectedAgent(null); 
+      }
     }
   };
   
