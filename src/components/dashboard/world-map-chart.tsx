@@ -126,15 +126,13 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
   }, [data, selectedCountryCode, selectedAgent]);
 
   const handleTreemapClick = (item: any) => {
-    if (item && item.payload) { // Recharts payload is nested in `payload` property for onClick
+    if (item && item.payload) { 
         const payload = item.payload;
         if (payload.isAgent) {
-            // If we're in agent view, clicking an agent sets the agent filter for the table
             setSelectedAgent(prev => prev === payload.name ? null : payload.name);
         } else {
-            // If we're in country view, clicking a country drills down into agent view
             setSelectedCountryCode(payload.code);
-            setSelectedAgent(null); // Reset agent filter when country changes
+            setSelectedAgent(null); 
         }
     }
   };
@@ -173,9 +171,9 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div>
+        <div className="space-y-4">
           {selectedCountryCode && (
-              <Button variant="ghost" size="sm" onClick={goBackToCountryView} className="mb-2">
+              <Button variant="ghost" size="sm" onClick={goBackToCountryView}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to all countries
               </Button>
@@ -208,8 +206,8 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
           </div>
         </div>
 
-        <div>
-           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <div className="space-y-4">
+           <div className="flex items-center justify-between flex-wrap gap-2">
              <h4 className="text-lg font-semibold">
                Call Log
                {selectedCountryCode && ` (Filtered by: ${selectedCountryName}`}
