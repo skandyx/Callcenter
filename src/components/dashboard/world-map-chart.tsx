@@ -9,7 +9,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 
 const countryPrefixes: { [key: string]: { code: string, name: string } } = {
@@ -233,7 +234,22 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                         <TableRow key={`${call.call_id}-${index}`}>
                             <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
                             <TableCell>
-                              <div className="flex items-center">
+                              <div className="flex items-center gap-2">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      {call.status_detail?.toLowerCase().includes("incoming") && (
+                                        <ArrowDownCircle className="h-4 w-4 text-green-500" />
+                                      )}
+                                      {call.status_detail?.toLowerCase().includes("outgoing") && (
+                                        <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                                      )}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{call.status_detail}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                                 <span>{call.calling_number}</span>
                               </div>
                             </TableCell>

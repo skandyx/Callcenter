@@ -15,7 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
 // Helper function to generate a color palette
@@ -215,7 +216,26 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
                    {filteredCalls.length > 0 ? filteredCalls.map((call, index) => (
                        <TableRow key={`${call.call_id}-${index}`}>
                            <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
-                           <TableCell>{call.calling_number}</TableCell>
+                           <TableCell>
+                             <div className="flex items-center gap-2">
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      {call.status_detail?.toLowerCase().includes("incoming") && (
+                                        <ArrowDownCircle className="h-4 w-4 text-green-500" />
+                                      )}
+                                      {call.status_detail?.toLowerCase().includes("outgoing") && (
+                                        <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                                      )}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>{call.status_detail}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <span>{call.calling_number}</span>
+                              </div>
+                           </TableCell>
                            <TableCell>{call.agent || "N/A"}</TableCell>
                            <TableCell>{call.queue_name || "Direct call"}</TableCell>
                            <TableCell><Badge variant={getStatusVariant(call.status)}>{call.status}</Badge></TableCell>

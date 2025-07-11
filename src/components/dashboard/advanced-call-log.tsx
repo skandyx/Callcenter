@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from "@/lib/utils";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
@@ -227,20 +227,33 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                       </TableCell>
                       <TableCell className="font-medium align-top">
                         <div className="flex items-center gap-2">
-                          <span>{item.calling_number}</span>
-                          {item.parent_call_id && isActualTransfer && (
-                            <TooltipProvider>
-                              <Tooltip>
+                           <TooltipProvider>
+                            <Tooltip>
                                 <TooltipTrigger>
-                                  <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                                  <>
+                                    {item.status_detail?.toLowerCase().includes("incoming") && (
+                                        <ArrowDownCircle className="h-4 w-4 text-green-500" />
+                                    )}
+                                    {item.status_detail?.toLowerCase().includes("outgoing") && (
+                                        <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                    {item.parent_call_id && isActualTransfer && (
+                                        <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Transfert de : {parentCall?.calling_number || "Inconnu"}</p>
-                                  <p className="text-xs text-muted-foreground">ID: {item.parent_call_id}</p>
+                                    <p>{item.status_detail}</p>
+                                    {item.parent_call_id && isActualTransfer && (
+                                      <>
+                                        <p>Transfert de : {parentCall?.calling_number || "Inconnu"}</p>
+                                        <p className="text-xs text-muted-foreground">ID: {item.parent_call_id}</p>
+                                      </>
+                                    )}
                                 </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
+                            </Tooltip>
+                           </TooltipProvider>
+                          <span>{item.calling_number}</span>
                         </div>
                       </TableCell>
                       <TableCell className="align-top">{item.queue_name || "Direct call"}</TableCell>
