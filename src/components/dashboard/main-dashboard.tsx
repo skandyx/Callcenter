@@ -23,6 +23,8 @@ import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
+type DataReceivingStatus = 'inactive' | 'idle' | 'receiving' | 'error';
+
 export default function MainDashboard() {
   const [allCallData, setAllCallData] = useState<CallData[]>([]);
   const [allAdvancedCallData, setAllAdvancedCallData] = useState<AdvancedCallData[]>([]);
@@ -34,88 +36,115 @@ export default function MainDashboard() {
   const [isDataFetchingEnabled, setIsDataFetchingEnabled] = useState(true);
   const [isAiEnabled, setIsAiEnabled] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [dataReceivingStatus, setDataReceivingStatus] = useState<DataReceivingStatus>('idle');
   const { toast } = useToast();
 
   const fetchCallData = useCallback(async () => {
+    let dataReceived = false;
     try {
       const response = await fetch('/api/call-data');
       if (!response.ok) throw new Error('Network response was not ok for call data');
       const data: CallData[] = await response.json();
       if (JSON.stringify(data) !== JSON.stringify(allCallData)) {
         setAllCallData(data);
+        dataReceived = true;
       }
     } catch (error) {
       console.error("Failed to fetch call data:", error);
+      setDataReceivingStatus('error');
       toast({
         variant: "destructive",
         title: "Connection Error",
         description: "Could not fetch real-time data from the server.",
       });
     }
+    return dataReceived;
   }, [toast, allCallData]);
 
   const fetchAdvancedCallData = useCallback(async () => {
+    let dataReceived = false;
     try {
       const response = await fetch('/api/advanced-call-data');
       if (!response.ok) throw new Error('Network response was not ok for advanced call data');
       const data: AdvancedCallData[] = await response.json();
       if (JSON.stringify(data) !== JSON.stringify(allAdvancedCallData)) {
         setAllAdvancedCallData(data);
+        dataReceived = true;
       }
     } catch (error) {
        console.error("Failed to fetch advanced call data:", error);
     }
+    return dataReceived;
   }, [allAdvancedCallData]);
 
   const fetchAgentStatusData = useCallback(async () => {
+    let dataReceived = false;
     try {
       const response = await fetch('/api/agent-status-data');
       if (!response.ok) throw new Error('Network response was not ok for agent status data');
       const data: AgentStatusData[] = await response.json();
        if (JSON.stringify(data) !== JSON.stringify(allAgentStatusData)) {
         setAllAgentStatusData(data);
+        dataReceived = true;
       }
     } catch (error) {
        console.error("Failed to fetch agent status data:", error);
     }
+    return dataReceived;
   }, [allAgentStatusData]);
   
   const fetchQueueIvrData = useCallback(async () => {
+    let dataReceived = false;
     try {
       const response = await fetch('/api/queue-ivr-data');
       if (!response.ok) throw new Error('Network response was not ok for queue/IVR data');
       const data: QueueIvrData[] = await response.json();
        if (JSON.stringify(data) !== JSON.stringify(allQueueIvrData)) {
         setAllQueueIvrData(data);
+        dataReceived = true;
       }
     } catch (error) {
        console.error("Failed to fetch queue/IVR data:", error);
     }
+    return dataReceived;
   }, [allQueueIvrData]);
 
   const fetchAllData = useCallback(async () => {
-    await Promise.all([
+    if (!isDataFetchingEnabled) {
+      setDataReceivingStatus('inactive');
+      return;
+    }
+    setDataReceivingStatus('idle');
+    const results = await Promise.all([
       fetchCallData(),
       fetchAdvancedCallData(),
       fetchAgentStatusData(),
       fetchQueueIvrData(),
     ]);
-    setIsLoading(false);
-  }, [fetchCallData, fetchAdvancedCallData, fetchAgentStatusData, fetchQueueIvrData]);
+
+    const anyDataReceived = results.some(r => r);
+
+    if (anyDataReceived) {
+      setDataReceivingStatus('receiving');
+      setTimeout(() => {
+        if(isDataFetchingEnabled) setDataReceivingStatus('idle');
+      }, 1000); // Green for 1 second then back to orange
+    }
+
+    if (isLoading) {
+      setIsLoading(false);
+    }
+  }, [fetchCallData, fetchAdvancedCallData, fetchAgentStatusData, fetchQueueIvrData, isDataFetchingEnabled, isLoading]);
   
   useEffect(() => {
-    fetchAllData(); // Fetch initial data
-    let intervalId: NodeJS.Timeout | null = null;
-
     if (isDataFetchingEnabled) {
-        intervalId = setInterval(fetchAllData, 3000);
+      setDataReceivingStatus('idle');
+      fetchAllData(); // Fetch initial data
+      const intervalId = setInterval(fetchAllData, 3000);
+      return () => clearInterval(intervalId);
+    } else {
+      setDataReceivingStatus('inactive');
     }
-    
-    return () => {
-        if (intervalId) {
-            clearInterval(intervalId);
-        }
-    };
   }, [isDataFetchingEnabled, fetchAllData]);
 
   const handleDataUpdateFromInput = (newData: CallData[]) => {
@@ -146,6 +175,12 @@ export default function MainDashboard() {
     return allQueueIvrData.filter(d => new Date(d.datetime).toISOString().split('T')[0] === formattedDate);
   }, [allQueueIvrData, selectedDate]);
 
+  const ledColorClass = {
+    inactive: 'bg-red-500',
+    idle: 'bg-orange-400',
+    receiving: 'bg-green-500',
+    error: 'bg-red-500 animate-ping'
+  }[dataReceivingStatus];
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -155,6 +190,7 @@ export default function MainDashboard() {
         </h1>
         <div className="flex flex-wrap items-center justify-end gap-2 md:gap-4">
           <div className="flex items-center gap-2">
+            <span className={cn("h-3 w-3 rounded-full transition-colors", ledColorClass)}></span>
             <Label htmlFor="fetching-switch" className="text-sm text-muted-foreground">Live</Label>
             <Switch
               id="fetching-switch"
