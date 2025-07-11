@@ -105,13 +105,15 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
   const selectedCountryName = useMemo(() => {
     if (!selectedCountryCode) return null;
     if (selectedCountryCode === 'unknown') return 'Unknown';
+    // Find the country name from the treemap data to ensure it's correct
+    const countryData = treemapData.find(item => !item.isAgent && item.code === selectedCountryCode);
+    if(countryData) return countryData.name;
     const countryEntry = Object.values(countryPrefixes).find(c => c.code === selectedCountryCode);
     return countryEntry ? countryEntry.name : selectedCountryCode;
-  }, [selectedCountryCode]);
+  }, [selectedCountryCode, treemapData]);
 
   
   const filteredCalls = useMemo(() => {
-    if (!selectedCountryCode && !selectedAgent) return data;
     return data.filter(call => {
         const countryInfo = getCountryInfoFromNumber(call.calling_number);
         const countryCode = countryInfo?.code || 'unknown';
@@ -261,5 +263,3 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
 };
 
 export default WorldMapChart;
-
-    
