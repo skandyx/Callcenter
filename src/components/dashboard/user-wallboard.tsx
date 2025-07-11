@@ -27,7 +27,15 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
         missedCalls: number 
     } } = {};
 
-    const agentNames = new Set(advancedCallData.map(d => d.agent).filter((a): a is string => !!a));
+    // Define values that are not real agents to filter them out.
+    const nonAgentNames = new Set(['sales', 'support', 'ivr', null, undefined]);
+    
+    const agentNames = new Set(
+        advancedCallData
+            .map(d => d.agent)
+            .filter((a): a is string => !!a && !nonAgentNames.has(a.toLowerCase()))
+    );
+
 
     agentNames.forEach(name => {
         stats[name] = {
