@@ -42,7 +42,7 @@ export default function MainDashboard() {
   const fetchCallData = useCallback(async () => {
     let dataReceived = false;
     try {
-      const response = await fetch('/api/call-data');
+      const response = await fetch('/api/stream');
       if (!response.ok) throw new Error('Network response was not ok for call data');
       const data: CallData[] = await response.json();
       if (JSON.stringify(data) !== JSON.stringify(allCallData)) {

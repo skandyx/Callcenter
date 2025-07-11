@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { type CallData } from "@/lib/types";
 import fs from "fs/promises";
@@ -24,6 +23,11 @@ async function readData(): Promise<CallData[]> {
 
 async function writeData(data: CallData[]): Promise<void> {
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
+}
+
+export async function GET() {
+  const data = await readData();
+  return NextResponse.json(data);
 }
 
 export async function POST(request: Request) {
