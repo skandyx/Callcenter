@@ -71,17 +71,12 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
         const counts: { [key: string]: { name: string, code: string, size: number } } = {};
         data.forEach(call => {
             const countryInfo = getCountryInfoFromNumber(call.calling_number);
-            if (countryInfo) {
-                if (!counts[countryInfo.code]) {
-                    counts[countryInfo.code] = { name: countryInfo.name, code: countryInfo.code, size: 0 };
-                }
-                counts[countryInfo.code].size += 1;
-            } else {
-                if (!counts['unknown']) {
-                    counts['unknown'] = { name: 'Unknown', code: 'unknown', size: 0 };
-                }
-                counts['unknown'].size += 1;
+            const code = countryInfo?.code || 'unknown';
+            const name = countryInfo?.name || 'Unknown';
+            if (!counts[code]) {
+                counts[code] = { name, code, size: 0 };
             }
+            counts[code].size += 1;
         });
         return Object.values(counts)
             .filter(c => c.size > 0)
@@ -116,11 +111,12 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
 
   
   const filteredCalls = useMemo(() => {
+    if (!selectedCountryCode && !selectedAgent) return data;
     return data.filter(call => {
         const countryInfo = getCountryInfoFromNumber(call.calling_number);
         const countryCode = countryInfo?.code || 'unknown';
         const countryMatch = selectedCountryCode ? countryCode === selectedCountryCode : true;
-        const agentMatch = selectedAgent ? call.agent === selectedAgent : true;
+        const agentMatch = selectedAgent ? (call.agent || "Unassigned") === selectedAgent : true;
         return countryMatch && agentMatch;
     });
   }, [data, selectedCountryCode, selectedAgent]);
@@ -171,9 +167,9 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
+        <div>
           {selectedCountryCode && (
-              <Button variant="ghost" size="sm" onClick={goBackToCountryView}>
+              <Button variant="ghost" size="sm" onClick={goBackToCountryView} className="mb-2">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to all countries
               </Button>
@@ -194,7 +190,7 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                 >
                     <RechartsTooltip formatter={(value, name, props) => [
                       value,
-                      props.payload.isAgent ? 'Total Calls for Agent' : 'Total Calls from Country'
+                      props.payload?.isAgent ? 'Total Calls for Agent' : 'Total Calls from Country'
                     ]}/>
                 </Treemap>
               </ResponsiveContainer>
@@ -206,8 +202,8 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
           </div>
         </div>
 
-        <div className="space-y-4">
-           <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+           <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
              <h4 className="text-lg font-semibold">
                Call Log
                {selectedCountryCode && ` (Filtered by: ${selectedCountryName}`}
@@ -234,12 +230,11 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                      </TableRow>
                  </TableHeader>
                  <TableBody>
-                    {filteredCalls.length > 0 ? filteredCalls.map((call, index) => (
+                    {filteredCalls.length > 0 ? filteredCalls.sort((a, b) => new Date(b.enter_datetime).getTime() - new Date(a.enter_datetime).getTime()).map((call, index) => (
                         <TableRow key={`${call.call_id}-${index}`}>
                             <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
                             <TableCell>
                               <div className="flex items-center">
-                                {selectedAgent === call.agent && <Badge variant={selectedAgent === call.agent ? "default" : "secondary" } className="mr-2">{call.agent}</Badge> }
                                 <span>{call.calling_number}</span>
                               </div>
                             </TableCell>
@@ -266,3 +261,5 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
 };
 
 export default WorldMapChart;
+
+    
