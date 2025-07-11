@@ -1,3 +1,4 @@
+
 import { useMemo } from "react";
 import { Phone, Clock, ShieldCheck, Percent, Zap } from "lucide-react";
 import KpiCard from "@/components/dashboard/kpi-card";
@@ -44,7 +45,7 @@ export default function MetricsDashboard({ data }: MetricsDashboardProps) {
       serviceLevel10: sl10,
       serviceLevel30: sl30,
       answeredRate: {
-        percentage: totalCalls > 0 ? (answeredCount / answeredTotal) * 100 : 0,
+        percentage: answeredTotal > 0 ? (answeredCount / answeredTotal) * 100 : 0,
         count: answeredCount,
         total: answeredTotal,
       },
