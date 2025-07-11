@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 
 const ROWS_PER_PAGE = 10;
 
@@ -142,7 +144,24 @@ export default function CallLog({ data }: { data: CallData[] }) {
                       {new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {call.calling_number}
+                      <div className="flex items-center gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              {call.status_detail?.toLowerCase().includes("incoming") && (
+                                <ArrowDownCircle className="h-4 w-4 text-green-500" />
+                              )}
+                              {call.status_detail?.toLowerCase().includes("outgoing") && (
+                                <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                              )}
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{call.status_detail}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <span>{call.calling_number}</span>
+                      </div>
                     </TableCell>
                     <TableCell>{call.queue_name || "Direct call"}</TableCell>
                     <TableCell>{call.agent || "N/A"}</TableCell>
