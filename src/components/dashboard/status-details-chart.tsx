@@ -154,37 +154,39 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="w-full h-[300px]">
+        <div>
           {selectedStatus && (
               <Button variant="ghost" size="sm" onClick={goBackToStatusView} className="mb-2">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to all statuses
               </Button>
           )}
-          {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <Treemap
-                data={chartData}
-                dataKey="size"
-                ratio={4 / 3}
-                stroke="#fff"
-                fill="hsl(var(--primary))"
-                content={<CustomizedContent />}
-                onClick={handleTreemapClick}
-                isAnimationActive={false}
-              >
-                  <RechartsTooltip formatter={(value, name) => [value, 'Total Calls']} />
-              </Treemap>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-              <p>No data to display for this selection.</p>
-            </div>
-          )}
+          <div className="w-full h-[300px]">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <Treemap
+                  data={chartData}
+                  dataKey="size"
+                  ratio={4 / 3}
+                  stroke="#fff"
+                  fill="hsl(var(--primary))"
+                  content={<CustomizedContent />}
+                  onClick={handleTreemapClick}
+                  isAnimationActive={false}
+                >
+                    <RechartsTooltip formatter={(value, name) => [value, 'Total Calls']} />
+                </Treemap>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p>No data to display for this selection.</p>
+              </div>
+            )}
+          </div>
         </div>
         
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <h4 className="text-lg font-semibold">
               Call Log
               {selectedStatus && ` (Filtered by: ${selectedStatus}`}
@@ -199,7 +201,7 @@ export default function StatusDetailsChart({ data }: { data: CallData[] }) {
           </div>
           <ScrollArea className="h-[400px] border rounded-lg">
              <Table>
-                <TableHeader className="sticky top-0 bg-background/95 backdrop-blur">
+                <TableHeader className="sticky top-0 bg-background/95 backdrop-blur z-10">
                     <TableRow>
                         <TableHead>Time</TableHead>
                         <TableHead>Caller</TableHead>

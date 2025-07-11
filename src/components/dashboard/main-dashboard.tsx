@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Calendar } from "../ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 
 export default function MainDashboard() {
   const [allCallData, setAllCallData] = useState<CallData[]>([]);
@@ -148,14 +148,14 @@ export default function MainDashboard() {
 
 
   return (
-    <div className="flex flex-col min-h-screen dark bg-background text-foreground">
-      <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 border-b shrink-0 bg-background/80 backdrop-blur-sm md:px-6">
-        <h1 className="text-xl font-semibold tracking-tight md:text-2xl">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
+      <header className="sticky top-0 z-10 flex items-center justify-between h-auto min-h-16 px-4 py-2 border-b shrink-0 bg-background/80 backdrop-blur-sm md:px-6">
+        <h1 className="text-lg font-semibold tracking-tight md:text-2xl">
           Call Center Analytics
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-end gap-2 md:gap-4">
           <div className="flex items-center gap-2">
-            <Label htmlFor="fetching-switch" className="text-sm text-muted-foreground">Receiving Data</Label>
+            <Label htmlFor="fetching-switch" className="text-sm text-muted-foreground">Live</Label>
             <Switch
               id="fetching-switch"
               checked={isDataFetchingEnabled}
@@ -184,7 +184,7 @@ export default function MainDashboard() {
                 {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent className="w-auto p-0" align="end">
               <Calendar
                 mode="single"
                 selected={selectedDate}
@@ -199,15 +199,17 @@ export default function MainDashboard() {
                </Button>
             </PopoverContent>
           </Popover>
-          <Button variant="outline" size="icon" asChild>
-            <Link href="/wallboard" aria-label="Open Wallboard">
-              <Tv className="w-5 h-5" />
-            </Link>
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="w-5 h-5" />
-            <span className="sr-only">Settings</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" asChild>
+              <Link href="/wallboard" aria-label="Open Wallboard">
+                <Tv className="w-5 h-5" />
+              </Link>
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => setIsSettingsOpen(true)}>
+              <Settings className="w-5 h-5" />
+              <span className="sr-only">Settings</span>
+            </Button>
+          </div>
         </div>
       </header>
       <main className="flex-1 p-4 md:p-8 lg:p-10">
@@ -252,16 +254,19 @@ export default function MainDashboard() {
 
 const DashboardSkeleton = () => (
   <div className="flex flex-col gap-8">
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <Skeleton className="h-32 rounded-lg" />
       <Skeleton className="h-32 rounded-lg" />
       <Skeleton className="h-32 rounded-lg" />
       <Skeleton className="h-32 rounded-lg" />
       <Skeleton className="h-32 rounded-lg" />
     </div>
-    <div className="grid gap-8 lg:grid-cols-2">
-      <Skeleton className="h-64 rounded-lg" />
-      <Skeleton className="h-64 rounded-lg" />
-    </div>
+    {true && (
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Skeleton className="h-64 rounded-lg" />
+        <Skeleton className="h-64 rounded-lg" />
+      </div>
+    )}
     <Skeleton className="h-96 rounded-lg" />
   </div>
 );

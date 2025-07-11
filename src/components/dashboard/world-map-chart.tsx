@@ -76,6 +76,11 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                     counts[countryInfo.code] = { name: countryInfo.name, code: countryInfo.code, size: 0 };
                 }
                 counts[countryInfo.code].size += 1;
+            } else {
+                if (!counts['unknown']) {
+                    counts['unknown'] = { name: 'Unknown', code: 'unknown', size: 0 };
+                }
+                counts['unknown'].size += 1;
             }
         });
         return Object.values(counts)
@@ -88,7 +93,8 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
     data
       .filter(call => {
           const countryInfo = getCountryInfoFromNumber(call.calling_number);
-          return countryInfo?.code === selectedCountryCode;
+          const countryCode = countryInfo?.code || 'unknown';
+          return countryCode === selectedCountryCode;
       })
       .forEach(call => {
         const agent = call.agent || "Unassigned";
@@ -103,6 +109,7 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
 
   const selectedCountryName = useMemo(() => {
     if (!selectedCountryCode) return null;
+    if (selectedCountryCode === 'unknown') return 'Unknown';
     const countryEntry = Object.values(countryPrefixes).find(c => c.code === selectedCountryCode);
     return countryEntry ? countryEntry.name : selectedCountryCode;
   }, [selectedCountryCode]);
@@ -111,7 +118,8 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
   const filteredCalls = useMemo(() => {
     return data.filter(call => {
         const countryInfo = getCountryInfoFromNumber(call.calling_number);
-        const countryMatch = selectedCountryCode ? countryInfo?.code === selectedCountryCode : true;
+        const countryCode = countryInfo?.code || 'unknown';
+        const countryMatch = selectedCountryCode ? countryCode === selectedCountryCode : true;
         const agentMatch = selectedAgent ? call.agent === selectedAgent : true;
         return countryMatch && agentMatch;
     });
@@ -159,47 +167,49 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
         <CardTitle>Call Distribution by Country</CardTitle>
         <CardDescription>
           {selectedCountryCode
-            ? `Distribution for country: ${selectedCountryName}. Click an agent to filter the list below.`
+            ? `Distribution for country: ${selectedCountryName}. Click an agent to drill down.`
             : "Geographic call distribution. Click a country to see agent breakdown."
           }
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="w-full h-[300px]">
+        <div>
           {selectedCountryCode && (
               <Button variant="ghost" size="sm" onClick={goBackToCountryView} className="mb-2">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to all countries
               </Button>
           )}
-          {treemapData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <Treemap
-                data={treemapData}
-                dataKey="size"
-                nameKey="name"
-                ratio={4 / 3}
-                stroke="#fff"
-                fill="hsl(var(--primary))"
-                content={<CustomizedTreemapContent />}
-                onClick={handleTreemapClick}
-                isAnimationActive={false}
-              >
-                  <RechartsTooltip formatter={(value, name, props) => [
-                    value,
-                    props.payload.isAgent ? 'Total Calls' : 'Total Calls'
-                  ]}/>
-              </Treemap>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-                <p>No data to display for this selection.</p>
-            </div>
-          )}
+          <div className="w-full h-[300px]">
+            {treemapData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <Treemap
+                  data={treemapData}
+                  dataKey="size"
+                  nameKey="name"
+                  ratio={4 / 3}
+                  stroke="#fff"
+                  fill="hsl(var(--primary))"
+                  content={<CustomizedTreemapContent />}
+                  onClick={handleTreemapClick}
+                  isAnimationActive={false}
+                >
+                    <RechartsTooltip formatter={(value, name, props) => [
+                      value,
+                      props.payload.isAgent ? 'Total Calls for Agent' : 'Total Calls from Country'
+                    ]}/>
+                </Treemap>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <p>No data to display for this selection.</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div>
-           <div className="flex items-center justify-between mb-4">
+           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
              <h4 className="text-lg font-semibold">
                Call Log
                {selectedCountryCode && ` (Filtered by: ${selectedCountryName}`}
@@ -214,7 +224,7 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
            </div>
            <ScrollArea className="h-[400px] border rounded-lg">
               <Table>
-                 <TableHeader className="sticky top-0 bg-background/95 backdrop-blur">
+                 <TableHeader className="sticky top-0 bg-background/95 backdrop-blur z-10">
                      <TableRow>
                          <TableHead>Time</TableHead>
                          <TableHead>Caller Number</TableHead>
