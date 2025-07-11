@@ -27,13 +27,18 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
         missedCalls: number 
     } } = {};
 
-    // Define values that are not real agents to filter them out.
-    const nonAgentNames = new Set(['sales', 'support', 'ivr', null, undefined]);
+    // Dynamically extract all unique queue names from the data
+    const queueNames = new Set(
+        advancedCallData
+            .map(d => d.queue_name)
+            .filter((q): q is string => !!q)
+    );
     
+    // An entry is considered a real agent if it has an agent_id and its name is not a queue name.
     const agentNames = new Set(
         advancedCallData
-            .map(d => d.agent)
-            .filter((a): a is string => !!a && !nonAgentNames.has(a.toLowerCase()))
+            .filter(d => d.agent_id && d.agent && !queueNames.has(d.agent))
+            .map(d => d.agent as string)
     );
 
 
@@ -55,9 +60,9 @@ const UserWallboard = ({ advancedCallData }: UserWallboardProps) => {
             const agentStat = stats[call.agent];
             
             if (call.status === 'Completed') {
-                if(call.status_detail.toLowerCase().includes('incoming')) {
+                if(call.status_detail?.toLowerCase().includes('incoming') || call.status_detail?.toLowerCase().includes('completed by')) {
                     agentStat.callsAnswered++;
-                } else if (call.status_detail.toLowerCase().includes('outgoing')) {
+                } else if (call.status_detail?.toLowerCase().includes('outgoing')) {
                     agentStat.callsOut++;
                 }
             } else if (call.status === 'Abandoned' && call.status_detail && call.status_detail.toLowerCase().includes('missed')) {
