@@ -59,6 +59,12 @@ const urlItems: UrlItem[] = [
     label: "Disponibilité des agents et connexions",
     description: "Statistiques sur les connexions aux files d'attente et l'état des agents.",
     path: "/api/stream/agent-status",
+  },
+  {
+    id: "profile-availability",
+    label: "Disponibilité des profils",
+    description: "Temps passé par chaque utilisateur dans chaque profil.",
+    path: "/api/stream/profile-availability",
   }
 ];
 
@@ -99,6 +105,8 @@ export default function AdvancedSettingsDialog({
         title: "Succès !",
         description: result.message,
       });
+      // Force a page reload to clear all states and data displays
+      window.location.reload();
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -163,7 +171,7 @@ export default function AdvancedSettingsDialog({
                   Zone de Danger
                 </Label>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Cette action est irréversible. Toutes les données d'appel actuelles (simplifiées et avancées) seront définitivement supprimées.
+                  Cette action est irréversible. Toutes les données d'appel actuelles seront définitivement supprimées. L'application sera rechargée.
                 </p>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -180,7 +188,7 @@ export default function AdvancedSettingsDialog({
                     <AlertDialogHeader>
                       <AlertDialogTitle>Êtes-vous absolument sûr ?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Cette action ne peut pas être annulée. Cela supprimera définitivement toutes les données d'appel du serveur.
+                        Cette action ne peut pas être annulée. Cela supprimera définitivement toutes les données du serveur et rechargera la page.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
