@@ -220,6 +220,7 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
               <Table>
                  <TableHeader className="sticky top-0 bg-background/95 backdrop-blur z-10">
                      <TableRow>
+                         <TableHead>Date</TableHead>
                          <TableHead>Time</TableHead>
                          <TableHead>Caller Number</TableHead>
                          <TableHead>Agent</TableHead>
@@ -232,6 +233,7 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                  <TableBody>
                     {filteredCalls.length > 0 ? filteredCalls.sort((a, b) => new Date(b.enter_datetime).getTime() - new Date(a.enter_datetime).getTime()).map((call, index) => (
                         <TableRow key={`${call.call_id}-${index}`}>
+                            <TableCell>{new Date(call.enter_datetime).toLocaleDateString()}</TableCell>
                             <TableCell>{new Date(call.enter_datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -261,7 +263,7 @@ const WorldMapChart = ({ data }: { data: CallData[] }) => {
                         </TableRow>
                     )) : (
                       <TableRow>
-                         <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                         <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                              No calls found for this filter combination.
                          </TableCell>
                       </TableRow>
