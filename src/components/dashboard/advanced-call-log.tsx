@@ -43,8 +43,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
     if (!data || data.length === 0) return [];
 
     const callGroups = new Map<string, AdvancedCallData[]>();
-    const rootCallIds = new Set<string>();
-
+    
     // Pass 1: Group all calls by their ultimate parent ID
     data.forEach(call => {
         const parentId = call.parent_call_id || call.call_id;
@@ -52,28 +51,14 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
             callGroups.set(parentId, []);
         }
         callGroups.get(parentId)!.push(call);
-        
-        // If a call has no parent, it's a potential root
-        if (!call.parent_call_id) {
-            rootCallIds.add(call.call_id);
-        }
     });
 
     const finalGroups: GroupedCall[] = [];
 
     // Pass 2: Process groups
-    callGroups.forEach((group, parentId) => {
-        // Find the actual root call in the group (the one with no parent_call_id or the earliest one)
-        let rootCall = group.find(c => c.call_id === parentId && !c.parent_call_id);
-        if (!rootCall) {
-            // If the parent isn't in this group, or if all have parents, find the earliest as the "effective" root for sorting
-            group.sort((a,b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
-            rootCall = group[0];
-        }
-
+    callGroups.forEach((group) => {
         // Sort all calls within the group chronologically
         group.sort((a,b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
-        
         finalGroups.push(group);
     });
 
@@ -87,13 +72,6 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   }, [data]);
 
   const filteredAndPaginatedData = useMemo(() => {
-     if (!filter) {
-        return groupedData.slice(
-            (currentPage - 1) * ROWS_PER_PAGE,
-            currentPage * ROWS_PER_PAGE
-        );
-     }
-     
      const lowercasedFilter = filter.toLowerCase();
      const filteredGroups = groupedData.filter(group => 
         group.some(call => 
@@ -109,7 +87,16 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
      );
   }, [groupedData, filter, currentPage]);
   
-  const totalPages = Math.ceil(groupedData.length / ROWS_PER_PAGE);
+  const totalPages = Math.ceil(
+      groupedData.filter(group => 
+        group.some(call => 
+            Object.values(call).some(val => 
+                String(val).toLowerCase().includes(filter.toLowerCase())
+            )
+        )
+     ).length / ROWS_PER_PAGE
+  );
+
 
   const getStatusVariant = (status: AdvancedCallData["status"]): "default" | "destructive" | "secondary" | "outline" => {
     switch (status) {
@@ -117,7 +104,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
       case "Abandoned": return "destructive";
       case "Redirected": return "secondary";
       case "Direct call": return "outline";
-      case "IVR": return "secondary";
+      // "IVR" is no longer treated as a primary status here
       default: return "secondary";
     }
   };
@@ -141,6 +128,9 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   
   const renderCallRow = (item: AdvancedCallData, isChild: boolean) => {
     const isActualTransfer = item.status_detail.toLowerCase().includes('transfer');
+    
+    // Display agent name only if it's different from the queue name
+    const agentDisplay = (item.agent?.trim() === item.queue_name?.trim()) ? "-" : item.agent || "N/A";
     
     return (
        <TableRow 
@@ -192,9 +182,11 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
             </div>
           </TableCell>
           <TableCell className="align-top">{item.queue_name || "N/A"}</TableCell>
-          <TableCell className="align-top">{item.agent || "N/A"}</TableCell>
+          <TableCell className="align-top">{agentDisplay}</TableCell>
+          <TableCell className="align-top">{item.status === 'IVR' ? 'IVR' : '-'}</TableCell>
           <TableCell className="align-top">
-            <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>
+            {item.status !== 'IVR' && <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>}
+             {item.status === 'IVR' && "-"}
           </TableCell>
           <TableCell className="align-top">{item.status_detail}</TableCell>
           <TableCell className="align-top">{item.processing_time_seconds ?? 0}s</TableCell>
@@ -233,6 +225,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                   <TableHead>Caller</TableHead>
                   <TableHead>Queue</TableHead>
                   <TableHead>Agent</TableHead>
+                  <TableHead>IVR</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Status Detail</TableHead>
                   <TableHead>Talk Time</TableHead>
@@ -249,7 +242,7 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={8}
+                      colSpan={9}
                       className="h-24 text-center text-muted-foreground"
                     >
                       No advanced call data received for the selected date.

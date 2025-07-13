@@ -19,7 +19,7 @@ export type CallData = {
   calling_number: string;
   calling_forward?: string | null;
   agent: string | null;
-  status: "Completed" | "Abandoned" | "Redirected" | "Direct call";
+  status: "Completed" | "Abandoned" | "Redirected" | "Direct call" | "IVR";
   status_detail: string;
   calling_name: string | null;
   enter_week: string;
