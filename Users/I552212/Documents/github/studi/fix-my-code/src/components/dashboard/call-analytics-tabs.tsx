@@ -37,7 +37,7 @@ export default function CallAnalyticsTabs({
           <TabsTrigger value="profile-availability">Disponibilité des profils</TabsTrigger>
           <TabsTrigger value="queue-ivr">Parcours IVR (avancé)</TabsTrigger>
           <TabsTrigger value="status-details">Analyse par statut</TabsTrigger>
-          <TabsTrigger value="map">Call Distribution by Country</TabsTrigger>
+          <TabsTrigger value="map">Carte du monde</TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>

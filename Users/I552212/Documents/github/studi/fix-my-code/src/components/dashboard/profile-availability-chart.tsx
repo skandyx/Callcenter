@@ -76,7 +76,7 @@ export default function ProfileAvailabilityChart({ data }: ProfileAvailabilityCh
      const statusSet = new Set<string>();
      chartData.forEach(d => {
        Object.keys(d).forEach(key => {
-         if(key !== 'user' && d[key] > 0) {
+         if(key !== 'user' && parseFloat(d[key]) > 0) {
            statusSet.add(key);
          }
        })
@@ -124,7 +124,7 @@ export default function ProfileAvailabilityChart({ data }: ProfileAvailabilityCh
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis type="number" unit=" min" />
-              <YAxis dataKey="user" type="category" width={150} />
+              <YAxis dataKey="user" type="category" width={150} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(value, name) => [`${value} minutes`, name]} />
               <Legend />
               {activeStatuses.map((status, index) => (
