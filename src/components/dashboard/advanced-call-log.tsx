@@ -51,10 +51,11 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
 
     data.forEach(call => {
       let currentCall = call;
+      // Ultimate parent starts as the call itself
       let ultimateParent = call;
       const visited = new Set<string>();
 
-      // Traverse up to find the ultimate parent
+      // Traverse up to find the ultimate parent, avoiding circular dependencies
       while (currentCall.parent_call_id && !visited.has(currentCall.call_id)) {
         visited.add(currentCall.call_id);
         const parent = callMap.get(currentCall.parent_call_id);
