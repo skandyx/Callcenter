@@ -1,66 +1,57 @@
 
 [
   {
-    "datetime": "2025-07-12T23:00:12.524",
-    "call_id": "66823019-aa7e-4d36-83e3-b0eb734cb5c0",
-    "queue_name": "SMSTOCALLER",
+    "datetime": "2025-07-11T14:46:48.031",
+    "call_id": "c2283cd8-f164-455c-972d-874dd4837bad",
+    "queue_name": "aze2",
     "calling_number": "003228807241",
-    "ivr_path": "Main Menu",
-    "event_type": "EnterIVR",
-    "event_detail": "Call entered main IVR menu."
+    "event_type": "Timeout",
+    "event_detail": "IVR hangup by timeout",
+    "ivr_path": "Entry -> aze2"
   },
   {
-    "datetime": "2025-07-12T23:00:19.524",
-    "call_id": "66823019-aa7e-4d36-83e3-b0eb734cb5c0",
+    "datetime": "2025-07-11T14:47:47.182",
+    "call_id": "49561513-ff4a-41e0-a140-f8c10ea682cf",
+    "queue_name": "A-1",
+    "calling_number": "003228807241",
+    "event_type": "ExitIVR",
+    "event_detail": "Connected to agent A-1",
+    "ivr_path": "Entry -> A-1"
+  },
+  {
+    "datetime": "2025-07-12T23:00:12.524",
+    "call_id": "3f8838ac-0651-4192-ad68-1481f0c17aee",
     "queue_name": "SMSTOCALLER",
     "calling_number": "003228807241",
-    "ivr_path": "Main Menu",
     "event_type": "Timeout",
-    "event_detail": "IVR hangup by timeout"
+    "event_detail": "IVR hangup by timeout",
+    "ivr_path": "Entry -> SMSTOCALLER"
   },
   {
     "datetime": "2025-07-12T23:05:16.404",
-    "call_id": "f33209da-ae4f-4224-bdb4-f1b8259ef484",
+    "call_id": "f37238c5-5c16-4232-9914-da915ad19ea7",
     "queue_name": "aze",
     "calling_number": "003228807241",
-    "ivr_path": "Sales IVR",
-    "event_type": "EnterIVR",
-    "event_detail": "Entered sales IVR."
-  },
-  {
-    "datetime": "2025-07-12T23:05:20.404",
-    "call_id": "f33209da-ae4f-4224-bdb4-f1b8259ef484",
-    "queue_name": "aze",
-    "calling_number": "003228807241",
-    "ivr_path": "Sales IVR",
     "event_type": "ExitIVR",
-    "event_detail": "Direct redirect to 091358259950911618"
+    "event_detail": "Direct redirect to 091358259950911618",
+    "ivr_path": "Entry -> aze"
   },
   {
     "datetime": "2025-07-12T23:06:13.424",
-    "call_id": "a7d57938-64c9-4adb-b12a-710db32371d5",
+    "call_id": "dacc55d4-6392-40ce-80ef-292e9964e1cd",
     "queue_name": "aze",
     "calling_number": "003228807241",
-    "ivr_path": "Support Menu",
     "event_type": "KeyPress",
-    "event_detail": "Pressed 2 for technical support"
-  },
-  {
-    "datetime": "2025-07-12T23:06:15.424",
-    "call_id": "a7d57938-64c9-4adb-b12a-710db32371d5",
-    "queue_name": "aze",
-    "calling_number": "003228807241",
-    "ivr_path": "Support Menu -> A-1 Queue",
-    "event_type": "EnterQueue",
-    "event_detail": "Entered queue A-1"
+    "event_detail": "Pressed digit for redirect to 003228829695",
+    "ivr_path": "Entry -> aze -> Keypress"
   },
   {
     "datetime": "2025-07-12T23:06:21.326",
-    "call_id": "a7d57938-64c9-4adb-b12a-710db32371d5",
+    "call_id": "dacc55d4-6392-40ce-80ef-292e9964e1cd",
     "queue_name": "A-1",
     "calling_number": "003228807241",
-    "ivr_path": "Support Menu -> A-1 Queue",
     "event_type": "ExitIVR",
-    "event_detail": "Connected to agent A-1"
+    "event_detail": "Connected to agent A-1",
+    "ivr_path": "Entry -> aze -> Keypress -> A-1"
   }
 ]
