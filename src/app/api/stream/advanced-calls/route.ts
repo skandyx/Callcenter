@@ -49,7 +49,6 @@ function mapToIvrEvent(call: AdvancedCallData): Omit<QueueIvrData, "ivr_path" | 
         }
     } else if (call.status === 'Completed' && call.time_in_queue_seconds !== undefined) {
          event_type = 'ExitIVR';
-         // The final agent name will be pulled from CallData on the frontend.
          event_detail = `Connected to agent`;
     }
 
@@ -91,26 +90,22 @@ function assignIvrPathAndDuration(events: (Omit<QueueIvrData, "ivr_path" | "dura
     for (let i = 0; i < sortedGroup.length; i++) {
       const event = sortedGroup[i];
       
-      // Calculate duration: time until the next event
       const duration = (i < sortedGroup.length - 1)
         ? (new Date(sortedGroup[i + 1].datetime).getTime() - new Date(event.datetime).getTime()) / 1000
-        : undefined; // No duration for the last event
+        : undefined;
 
       // Assign the path as it was *before* this event
       const eventWithPath = { ...event, ivr_path: currentPath, duration };
       result.push(eventWithPath);
 
       // Update the path for the *next* event
-      if (event.event_type === 'ExitIVR' && event.queue_name) {
-         if (!currentPath.endsWith(event.queue_name)) {
-           currentPath = `${currentPath} -> ${event.queue_name}`;
-         }
-      } else if (event.event_type === 'KeyPress') {
-          if (!currentPath.endsWith('Keypress')) {
-              currentPath = `${currentPath} -> Keypress`;
-          }
-      } else if (event.queue_name && !currentPath.endsWith(event.queue_name)) {
-          currentPath = `${currentPath} -> ${event.queue_name}`;
+      let pathComponent = event.queue_name;
+      if (event.event_type === 'KeyPress') {
+          pathComponent = 'Keypress';
+      }
+
+      if (pathComponent && !currentPath.endsWith(pathComponent)) {
+          currentPath = `${currentPath} -> ${pathComponent}`;
       }
     }
   }
@@ -131,9 +126,7 @@ export async function POST(request: Request) {
     
     const dataToProcess = Array.isArray(newData) ? newData : [newData];
     
-    // Process each incoming call record
     dataToProcess.forEach(call => {
-      // Logic to propagate parent_call_id for transfers
       if (call.parent_call_id) {
         const parentCall = allAdvancedData.find(c => c.call_id === call.parent_call_id) || dataToProcess.find(c => c.call_id === call.parent_call_id);
         if (parentCall && parentCall.parent_call_id) {
@@ -141,10 +134,8 @@ export async function POST(request: Request) {
         }
       }
 
-      // Logic to map to IVR event
       const ivrEvent = mapToIvrEvent(call);
       if (ivrEvent) {
-          // Prevent duplicates
           const existingEventIndex = allQueueIvrData.findIndex(e => e.datetime === ivrEvent.datetime && e.call_id === ivrEvent.call_id);
           if (existingEventIndex === -1) {
               allQueueIvrData.push(ivrEvent);
@@ -152,16 +143,13 @@ export async function POST(request: Request) {
       }
     });
 
-    // Add new data to existing data
     allAdvancedData.push(...dataToProcess);
     
-    // Always re-calculate paths and durations for the entire dataset to ensure correctness
     if(allQueueIvrData.length > 0) {
       const processedIvrData = assignIvrPathAndDuration(allQueueIvrData);
       await writeData(queueIvrDataFilePath, processedIvrData);
     }
    
-    // Write updated data back to files
     await writeData(advancedDataFilePath, allAdvancedData);
    
     return NextResponse.json(

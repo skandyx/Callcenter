@@ -99,4 +99,3 @@ export type QueueIvrData = {
   event_detail: string;
   duration?: number;
 };
-
