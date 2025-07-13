@@ -7,17 +7,9 @@ import { type ProfileAvailabilityData } from "@/lib/types";
 const dataDir = path.join(process.cwd(), "Datas-json");
 const dataFilePath = path.join(dataDir, "profile-availability-data.json");
 
-async function ensureDirectoryExists() {
-  try {
-    await fs.mkdir(dataDir, { recursive: true });
-  } catch (error) {
-    console.error("Error creating data directory:", error);
-  }
-}
-
 async function readData(): Promise<ProfileAvailabilityData[]> {
   try {
-    await ensureDirectoryExists();
+    await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(dataFilePath, "utf8");
     return JSON.parse(fileContent);
   } catch (error: any) {
@@ -31,7 +23,7 @@ async function readData(): Promise<ProfileAvailabilityData[]> {
 }
 
 async function writeData(data: ProfileAvailabilityData[]): Promise<void> {
-  await ensureDirectoryExists();
+  await fs.mkdir(dataDir, { recursive: true });
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
 }
 

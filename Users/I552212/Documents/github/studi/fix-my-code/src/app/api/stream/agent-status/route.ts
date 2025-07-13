@@ -6,17 +6,9 @@ import path from "path";
 const dataDir = path.join(process.cwd(), "Datas-json");
 const dataFilePath = path.join(dataDir, "agent-status-data.json");
 
-async function ensureDirectoryExists() {
-  try {
-    await fs.mkdir(dataDir, { recursive: true });
-  } catch (error) {
-    console.error("Error creating data directory:", error);
-  }
-}
-
 async function readData(): Promise<any[]> {
   try {
-    await ensureDirectoryExists();
+    await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(dataFilePath, "utf8");
     return JSON.parse(fileContent);
   } catch (error: any) {
@@ -30,7 +22,7 @@ async function readData(): Promise<any[]> {
 }
 
 async function writeData(data: any[]): Promise<void> {
-  await ensureDirectoryExists();
+  await fs.mkdir(dataDir, { recursive: true });
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
 }
 

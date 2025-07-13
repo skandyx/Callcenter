@@ -12,24 +12,20 @@ const profileAvailabilityDataPath = path.join(dataDir, "profile-availability-dat
 
 async function clearFile(filePath: string): Promise<void> {
     try {
-        await fs.access(filePath);
+        // Ensure the directory exists before trying to access the file
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        // Write an empty array to the file, creating it if it doesn't exist.
         await fs.writeFile(filePath, "[]", "utf8");
     } catch (error: any) {
-        if (error.code === 'ENOENT') {
-            console.log(`File not found, no need to clear: ${filePath}`);
-            // Attempt to create the directory if it doesn't exist
-            await fs.mkdir(path.dirname(filePath), { recursive: true });
-            await fs.writeFile(filePath, "[]", "utf8");
-            console.log(`Created new empty file: ${filePath}`);
-        } else {
-            throw error;
-        }
+        // This will catch more critical errors during file writing
+        console.error(`Error clearing or creating file: ${filePath}`, error);
+        throw error;
     }
 }
 
 export async function POST() {
     try {
-        await fs.mkdir(dataDir, { recursive: true });
+        // The clearFile function now handles directory creation.
         await clearFile(simplifiedDataPath);
         await clearFile(advancedDataPath);
         await clearFile(agentStatusDataPath);

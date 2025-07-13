@@ -7,17 +7,9 @@ import { type AdvancedCallData } from "@/lib/types";
 const dataDir = path.join(process.cwd(), "Datas-json");
 const advancedDataFilePath = path.join(dataDir, "advanced-call-data.json");
 
-async function ensureDirectoryExists() {
-  try {
-    await fs.mkdir(dataDir, { recursive: true });
-  } catch (error) {
-    console.error("Error creating data directory:", error);
-  }
-}
-
 async function readData<T>(filePath: string): Promise<T[]> {
   try {
-    await ensureDirectoryExists();
+    await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(filePath, "utf8");
     return JSON.parse(fileContent);
   } catch (error: any) {
@@ -31,7 +23,7 @@ async function readData<T>(filePath: string): Promise<T[]> {
 }
 
 async function writeData<T>(filePath: string, data: T[]): Promise<void> {
-  await ensureDirectoryExists();
+  await fs.mkdir(dataDir, { recursive: true });
   await fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf8");
 }
 
