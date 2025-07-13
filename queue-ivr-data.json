@@ -1,1 +1,66 @@
-[]
+
+[
+  {
+    "datetime": "2025-07-12T23:00:12.524",
+    "call_id": "66823019-aa7e-4d36-83e3-b0eb734cb5c0",
+    "queue_name": "SMSTOCALLER",
+    "calling_number": "003228807241",
+    "ivr_path": "Main Menu",
+    "event_type": "EnterIVR",
+    "event_detail": "Call entered main IVR menu."
+  },
+  {
+    "datetime": "2025-07-12T23:00:19.524",
+    "call_id": "66823019-aa7e-4d36-83e3-b0eb734cb5c0",
+    "queue_name": "SMSTOCALLER",
+    "calling_number": "003228807241",
+    "ivr_path": "Main Menu",
+    "event_type": "Timeout",
+    "event_detail": "IVR hangup by timeout"
+  },
+  {
+    "datetime": "2025-07-12T23:05:16.404",
+    "call_id": "f33209da-ae4f-4224-bdb4-f1b8259ef484",
+    "queue_name": "aze",
+    "calling_number": "003228807241",
+    "ivr_path": "Sales IVR",
+    "event_type": "EnterIVR",
+    "event_detail": "Entered sales IVR."
+  },
+  {
+    "datetime": "2025-07-12T23:05:20.404",
+    "call_id": "f33209da-ae4f-4224-bdb4-f1b8259ef484",
+    "queue_name": "aze",
+    "calling_number": "003228807241",
+    "ivr_path": "Sales IVR",
+    "event_type": "ExitIVR",
+    "event_detail": "Direct redirect to 091358259950911618"
+  },
+  {
+    "datetime": "2025-07-12T23:06:13.424",
+    "call_id": "a7d57938-64c9-4adb-b12a-710db32371d5",
+    "queue_name": "aze",
+    "calling_number": "003228807241",
+    "ivr_path": "Support Menu",
+    "event_type": "KeyPress",
+    "event_detail": "Pressed 2 for technical support"
+  },
+  {
+    "datetime": "2025-07-12T23:06:15.424",
+    "call_id": "a7d57938-64c9-4adb-b12a-710db32371d5",
+    "queue_name": "aze",
+    "calling_number": "003228807241",
+    "ivr_path": "Support Menu -> A-1 Queue",
+    "event_type": "EnterQueue",
+    "event_detail": "Entered queue A-1"
+  },
+  {
+    "datetime": "2025-07-12T23:06:21.326",
+    "call_id": "a7d57938-64c9-4adb-b12a-710db32371d5",
+    "queue_name": "A-1",
+    "calling_number": "003228807241",
+    "ivr_path": "Support Menu -> A-1 Queue",
+    "event_type": "ExitIVR",
+    "event_detail": "Connected to agent A-1"
+  }
+]

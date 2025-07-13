@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
+// This endpoint is a placeholder. It currently logs received data.
+// In a real application, you would add logic to process and store this data.
 export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    // Dans une application réelle, vous valideriez les données et les traiteriez.
-    // Pour cet exemple, nous affichons simplement les données reçues.
+    // In a real application, you would validate the data and process it.
+    // For this example, we just log the received data.
     console.log("Données de disponibilité des profils reçues via /api/stream/profile-availability:", data);
 
     return NextResponse.json(
