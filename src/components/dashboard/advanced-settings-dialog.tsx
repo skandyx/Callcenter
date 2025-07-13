@@ -59,12 +59,6 @@ const urlItems: UrlItem[] = [
     label: "Disponibilité des agents et connexions",
     description: "Statistiques sur les connexions aux files d'attente et l'état des agents.",
     path: "/api/stream/agent-status",
-  },
-  {
-    id: "queue-ivr",
-    label: "Données de file d'attente et IVR",
-    description: "Journaux d'événements pour le parcours de l'appelant dans les menus vocaux.",
-    path: "/api/stream/queue-ivr",
   }
 ];
 
