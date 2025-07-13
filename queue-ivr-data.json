@@ -16,7 +16,7 @@
     "calling_number": "003228807241",
     "event_type": "ExitIVR",
     "event_detail": "Connected to agent A-1",
-    "ivr_path": "Entry -> A-1"
+    "ivr_path": "Entry"
   },
   {
     "datetime": "2025-07-12T23:00:12.524",
@@ -43,7 +43,7 @@
     "calling_number": "003228807241",
     "event_type": "KeyPress",
     "event_detail": "Pressed digit for redirect to 003228829695",
-    "ivr_path": "Entry -> aze -> Keypress"
+    "ivr_path": "Entry -> aze"
   },
   {
     "datetime": "2025-07-12T23:06:21.326",
@@ -52,6 +52,6 @@
     "calling_number": "003228807241",
     "event_type": "ExitIVR",
     "event_detail": "Connected to agent A-1",
-    "ivr_path": "Entry -> aze -> Keypress -> A-1"
+    "ivr_path": "Entry -> aze -> Keypress"
   }
 ]
