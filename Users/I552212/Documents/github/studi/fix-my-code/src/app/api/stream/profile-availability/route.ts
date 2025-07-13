@@ -9,11 +9,13 @@ const dataFilePath = path.join(dataDir, "profile-availability-data.json");
 
 async function readData(): Promise<ProfileAvailabilityData[]> {
   try {
+    // Ensure the directory exists before trying to access the file
     await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(dataFilePath, "utf8");
     return JSON.parse(fileContent);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
+      // If the file doesn't exist, create it with an empty array.
       await fs.writeFile(dataFilePath, "[]", "utf8");
       return []; 
     }
@@ -23,6 +25,7 @@ async function readData(): Promise<ProfileAvailabilityData[]> {
 }
 
 async function writeData(data: ProfileAvailabilityData[]): Promise<void> {
+  // Ensure the directory exists before writing to the file
   await fs.mkdir(dataDir, { recursive: true });
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
 }
@@ -59,3 +62,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+    

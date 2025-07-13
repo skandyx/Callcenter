@@ -44,17 +44,14 @@ export default function CallAnalyticsTabs({
       <TabsContent value="simplified" className="mt-4">
         <CallLog data={callData} />
       </TabsContent>
-       <TabsContent value="agent-status" className="mt-4">
-        <AgentStatusLog data={agentStatusData} />
-      </TabsContent>
       <TabsContent value="advanced" className="mt-4">
         <AdvancedCallLog data={advancedCallData} />
       </TabsContent>
+       <TabsContent value="agent-status" className="mt-4">
+        <AgentStatusLog data={agentStatusData} />
+      </TabsContent>
        <TabsContent value="profile-availability" className="mt-4">
         <ProfileAvailabilityChart data={profileAvailabilityData} />
-      </TabsContent>
-      <TabsContent value="map" className="mt-4">
-        <WorldMapChart data={callData} />
       </TabsContent>
       <TabsContent value="queue-ivr" className="mt-4">
         <QueueIvrLog data={queueIvrData} callData={callData} />
@@ -62,6 +59,11 @@ export default function CallAnalyticsTabs({
       <TabsContent value="status-details" className="mt-4">
         <StatusDetailsChart data={callData} />
       </TabsContent>
+      <TabsContent value="map" className="mt-4">
+        <WorldMapChart data={callData} />
+      </TabsContent>
     </Tabs>
   );
 }
+
+    
