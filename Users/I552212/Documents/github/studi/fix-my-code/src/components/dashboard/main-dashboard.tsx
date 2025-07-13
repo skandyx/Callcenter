@@ -347,5 +347,3 @@ const DashboardSkeleton = () => (
     <Skeleton className="h-96 rounded-lg" />
   </div>
 );
-
-    
