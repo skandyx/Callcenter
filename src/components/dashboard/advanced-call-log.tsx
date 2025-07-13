@@ -43,85 +43,63 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const groupedAndFilteredData = useMemo(() => {
-    // Group calls by their ultimate parent ID
+    // This function now returns a flat list with properties to identify parents and children
+    const callMap = new Map<string, AdvancedCallData>();
+    data.forEach(call => callMap.set(call.call_id, call));
+
     const callGroups: { [key: string]: GroupedCall } = {};
 
-    // First pass: identify all items and their potential parents
     data.forEach(call => {
-      const parentId = call.parent_call_id || call.call_id;
-      if (!callGroups[parentId]) {
-        // Find the ultimate parent in the dataset
-        let ultimateParent = call;
-        let currentCall = call;
-        const visitedIds = new Set();
-        while(currentCall.parent_call_id && !visitedIds.has(currentCall.call_id)) {
-            visitedIds.add(currentCall.call_id);
-            const parentInData = data.find(p => p.call_id === currentCall.parent_call_id);
-            if (parentInData) {
-                ultimateParent = parentInData;
-                currentCall = parentInData;
-            } else {
-                break;
-            }
+      let currentCall = call;
+      let ultimateParent = call;
+      const visited = new Set<string>();
+
+      // Traverse up to find the ultimate parent
+      while (currentCall.parent_call_id && !visited.has(currentCall.call_id)) {
+        visited.add(currentCall.call_id);
+        const parent = callMap.get(currentCall.parent_call_id);
+        if (parent) {
+          ultimateParent = parent;
+          currentCall = parent;
+        } else {
+          break; // Parent not in the dataset, stop traversing
         }
+      }
+
+      // Initialize group if it doesn't exist
+      if (!callGroups[ultimateParent.call_id]) {
         callGroups[ultimateParent.call_id] = { parent: ultimateParent, children: [] };
+      }
+
+      // Add call to children if it's not the ultimate parent
+      if (call.call_id !== ultimateParent.call_id) {
+        callGroups[ultimateParent.call_id].children.push(call);
       }
     });
 
-    // Second pass: correctly assign parents and children
-    const finalGroups: { [key: string]: GroupedCall } = {};
-    data.forEach(call => {
-        let ultimateParent = call;
-        let currentCall = call;
-        const visitedIds = new Set();
-        while(currentCall.parent_call_id && !visitedIds.has(currentCall.call_id)) {
-            visitedIds.add(currentCall.call_id);
-            const parentInData = data.find(p => p.call_id === currentCall.parent_call_id);
-            if (parentInData) {
-                ultimateParent = parentInData;
-                currentCall = parentInData;
-            } else {
-                break;
-            }
-        }
-
-        if (!finalGroups[ultimateParent.call_id]) {
-          finalGroups[ultimateParent.call_id] = { parent: ultimateParent, children: [] };
-        }
-        if (ultimateParent.call_id !== call.call_id) {
-          finalGroups[ultimateParent.call_id].children.push(call);
-        }
-    });
-
     // Sort children by date within each group
-    Object.values(finalGroups).forEach(group => {
+    Object.values(callGroups).forEach(group => {
       group.children.sort((a, b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
     });
 
-    const flatList = Object.values(finalGroups)
-      .sort((a, b) => new Date(b.parent.enter_datetime).getTime() - new Date(a.parent.enter_datetime).getTime())
-      .flatMap(group => {
-         const children = group.children.map((child, index) => ({...child, isChild: true, isFirstChild: index === 0}));
-         return [{...group.parent, hasChildren: group.children.length > 0}, ...children];
-      });
+    let displayList = Object.values(callGroups)
+      .sort((a, b) => new Date(b.parent.enter_datetime).getTime() - new Date(a.parent.enter_datetime).getTime());
 
-    if (!filter) {
-      return flatList;
-    }
-    
-    const lowercasedFilter = filter.toLowerCase();
-
-    return Object.values(finalGroups)
-      .filter(group => {
+    // Apply text filter if present
+    if (filter) {
+      const lowercasedFilter = filter.toLowerCase();
+      displayList = displayList.filter(group => {
         const parentMatch = Object.values(group.parent).some(val => val?.toString().toLowerCase().includes(lowercasedFilter));
         const childrenMatch = group.children.some(child => Object.values(child).some(val => val?.toString().toLowerCase().includes(lowercasedFilter)));
         return parentMatch || childrenMatch;
-      })
-      .sort((a, b) => new Date(b.parent.enter_datetime).getTime() - new Date(a.parent.enter_datetime).getTime())
-      .flatMap(group => {
-         const children = group.children.map((child, index) => ({...child, isChild: true, isFirstChild: index === 0}));
-         return [{...group.parent, hasChildren: group.children.length > 0}, ...children];
       });
+    }
+
+    // Flatten the groups into a list for rendering
+    return displayList.flatMap(group => {
+       const children = group.children.map(child => ({...child, isChild: true}));
+       return [{...group.parent, hasChildren: group.children.length > 0}, ...children];
+    });
 
   }, [data, filter]);
 
@@ -211,12 +189,12 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                       key={`${item.call_id}-${index}`}
                       className={cn(!item.isChild && item.hasChildren && "bg-muted/50")}
                     >
-                      <TableCell className="align-top">
-                        <div className="flex items-center">
+                      <TableCell className="align-top whitespace-nowrap">
+                        <div className="flex items-start">
                           {item.isChild && (
-                            <div className="relative w-8 h-full mr-2">
-                                <div className="absolute left-1/2 w-px h-full bg-border -translate-x-1/2"></div>
-                                <div className="absolute top-1/2 w-4 h-px bg-border -translate-y-1/2"></div>
+                            <div className="relative w-8 h-full mr-2 self-stretch">
+                                <div className="absolute left-3 w-px h-full bg-border"></div>
+                                <div className="absolute top-4 w-4 h-px bg-border"></div>
                             </div>
                           )}
                            <div className={cn("flex-1", item.isChild && "pl-0")}>
