@@ -45,10 +45,13 @@ export default function MainDashboard() {
       const response = await fetch('/api/stream');
       if (!response.ok) throw new Error('Network response was not ok for call data');
       const data: CallData[] = await response.json();
-      if (JSON.stringify(data) !== JSON.stringify(allCallData)) {
-        setAllCallData(data);
-        dataReceived = true;
-      }
+      setAllCallData(prevData => {
+        if (JSON.stringify(data) !== JSON.stringify(prevData)) {
+          dataReceived = true;
+          return data;
+        }
+        return prevData;
+      });
     } catch (error) {
       console.error("Failed to fetch call data:", error);
       setDataReceivingStatus('error');
@@ -59,7 +62,7 @@ export default function MainDashboard() {
       });
     }
     return dataReceived;
-  }, [toast, allCallData]);
+  }, [toast]);
 
   const fetchAdvancedCallData = useCallback(async () => {
     let dataReceived = false;
@@ -67,15 +70,18 @@ export default function MainDashboard() {
       const response = await fetch('/api/advanced-call-data');
       if (!response.ok) throw new Error('Network response was not ok for advanced call data');
       const data: AdvancedCallData[] = await response.json();
-      if (JSON.stringify(data) !== JSON.stringify(allAdvancedCallData)) {
-        setAllAdvancedCallData(data);
-        dataReceived = true;
-      }
+      setAllAdvancedCallData(prevData => {
+        if (JSON.stringify(data) !== JSON.stringify(prevData)) {
+          dataReceived = true;
+          return data;
+        }
+        return prevData;
+      });
     } catch (error) {
        console.error("Failed to fetch advanced call data:", error);
     }
     return dataReceived;
-  }, [allAdvancedCallData]);
+  }, []);
 
   const fetchAgentStatusData = useCallback(async () => {
     let dataReceived = false;
@@ -83,15 +89,18 @@ export default function MainDashboard() {
       const response = await fetch('/api/agent-status-data');
       if (!response.ok) throw new Error('Network response was not ok for agent status data');
       const data: AgentStatusData[] = await response.json();
-       if (JSON.stringify(data) !== JSON.stringify(allAgentStatusData)) {
-        setAllAgentStatusData(data);
-        dataReceived = true;
-      }
+      setAllAgentStatusData(prevData => {
+        if (JSON.stringify(data) !== JSON.stringify(prevData)) {
+          dataReceived = true;
+          return data;
+        }
+        return prevData;
+      });
     } catch (error) {
        console.error("Failed to fetch agent status data:", error);
     }
     return dataReceived;
-  }, [allAgentStatusData]);
+  }, []);
   
   const fetchQueueIvrData = useCallback(async () => {
     let dataReceived = false;
@@ -99,15 +108,18 @@ export default function MainDashboard() {
       const response = await fetch('/api/queue-ivr-data');
       if (!response.ok) throw new Error('Network response was not ok for queue/IVR data');
       const data: QueueIvrData[] = await response.json();
-       if (JSON.stringify(data) !== JSON.stringify(allQueueIvrData)) {
-        setAllQueueIvrData(data);
-        dataReceived = true;
-      }
+      setAllQueueIvrData(prevData => {
+        if (JSON.stringify(data) !== JSON.stringify(prevData)) {
+          dataReceived = true;
+          return data;
+        }
+        return prevData;
+      });
     } catch (error) {
        console.error("Failed to fetch queue/IVR data:", error);
     }
     return dataReceived;
-  }, [allQueueIvrData]);
+  }, []);
 
   const fetchAllData = useCallback(async () => {
     if (!isDataFetchingEnabled) {
@@ -306,3 +318,5 @@ const DashboardSkeleton = () => (
     <Skeleton className="h-96 rounded-lg" />
   </div>
 );
+
+    
