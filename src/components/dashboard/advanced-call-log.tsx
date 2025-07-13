@@ -181,9 +181,9 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
               <span>{item.calling_number}</span>
             </div>
           </TableCell>
+          <TableCell className="align-top">{item.status === 'IVR' ? 'IVR' : '-'}</TableCell>
           <TableCell className="align-top">{item.queue_name || "N/A"}</TableCell>
           <TableCell className="align-top">{agentDisplay}</TableCell>
-          <TableCell className="align-top">{item.status === 'IVR' ? 'IVR' : '-'}</TableCell>
           <TableCell className="align-top">
             {item.status !== 'IVR' && <Badge variant={getStatusVariant(item.status)}>{item.status}</Badge>}
              {item.status === 'IVR' && "-"}
@@ -223,9 +223,9 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
                 <TableRow>
                   <TableHead>Date & Time</TableHead>
                   <TableHead>Caller</TableHead>
+                  <TableHead>IVR</TableHead>
                   <TableHead>Queue</TableHead>
                   <TableHead>Agent</TableHead>
-                  <TableHead>IVR</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Status Detail</TableHead>
                   <TableHead>Talk Time</TableHead>
