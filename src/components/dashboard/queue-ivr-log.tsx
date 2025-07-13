@@ -51,7 +51,7 @@ export default function QueueIvrLog({ data, callData }: QueueIvrLogProps) {
     const totalEvents = data.length;
     const keyPressEvents = data.filter(d => d.event_type === 'KeyPress').length;
     const connectedCalls = data.filter(d => d.event_type === 'ExitIVR').length;
-    const hangupCalls = data.filter(d => d.event_type === 'Hangup').length;
+    const hangupCalls = data.filter(d => d.event_type === 'Hangup' || d.event_type === 'Timeout').length;
     const uniqueCalls = uniqueCallIdsInIvr.size;
 
     const kpiMetrics = {
@@ -87,6 +87,17 @@ export default function QueueIvrLog({ data, callData }: QueueIvrLogProps) {
         return "secondary";
     }
   };
+  
+  const findFinalAgentForCall = (callId: string) => {
+    // Find calls that are part of the same conversation (same parent_call_id or call_id)
+    const conversationCalls = callData.filter(c => c.parent_call_id === callId || c.call_id === callId);
+    // Find the last "Completed" call in that conversation which has an agent
+    const lastCompleted = conversationCalls
+        .filter(c => c.status === 'Completed' && c.agent)
+        .sort((a,b) => new Date(b.enter_datetime).getTime() - new Date(a.enter_datetime).getTime());
+    
+    return lastCompleted.length > 0 ? lastCompleted[0].agent : null;
+  }
 
   if(!data) {
       return (
@@ -143,13 +154,14 @@ export default function QueueIvrLog({ data, callData }: QueueIvrLogProps) {
                 <TableHead>Event Type</TableHead>
                 <TableHead>IVR Path</TableHead>
                 <TableHead>Details</TableHead>
+                <TableHead>Duration (s)</TableHead>
                 <TableHead>Call ID</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
                 paginatedData.map((item, index) => (
-                  <TableRow key={`${item.call_id}-${index}`}>
+                  <TableRow key={`${item.call_id}-${item.datetime}-${index}`}>
                     <TableCell>
                       <div>{new Date(item.datetime).toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' })}</div>
                       <div className="text-muted-foreground text-xs">{new Date(item.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</div>
@@ -168,13 +180,19 @@ export default function QueueIvrLog({ data, callData }: QueueIvrLogProps) {
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell>{item.event_detail}</TableCell>
+                    <TableCell>
+                        {item.event_type === 'ExitIVR'
+                            ? `Connected to agent ${findFinalAgentForCall(item.call_id) || item.queue_name}`
+                            : item.event_detail
+                        }
+                    </TableCell>
+                    <TableCell>{item.duration !== undefined ? item.duration.toFixed(0) : '-'}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{item.call_id}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                     No Queue/IVR data received.
                   </TableCell>
                 </TableRow>

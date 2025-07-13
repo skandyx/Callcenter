@@ -30,7 +30,7 @@ async function writeData<T>(filePath: string, data: T[]): Promise<void> {
 
 // ============== IVR Event Mapping Logic ==============
 
-function mapToIvrEvent(call: AdvancedCallData): Omit<QueueIvrData, "ivr_path"> | null {
+function mapToIvrEvent(call: AdvancedCallData): Omit<QueueIvrData, "ivr_path" | "duration"> | null {
     const detail = call.status_detail.toLowerCase();
 
     let event_type: QueueIvrData['event_type'] | null = null;
@@ -49,7 +49,8 @@ function mapToIvrEvent(call: AdvancedCallData): Omit<QueueIvrData, "ivr_path"> |
         }
     } else if (call.status === 'Completed' && call.time_in_queue_seconds !== undefined) {
          event_type = 'ExitIVR';
-         event_detail = `Connected to agent ${call.agent}`;
+         // The final agent name will be pulled from CallData on the frontend.
+         event_detail = `Connected to agent`;
     }
 
     if (event_type) {
@@ -67,40 +68,54 @@ function mapToIvrEvent(call: AdvancedCallData): Omit<QueueIvrData, "ivr_path"> |
 }
 
 
-function assignIvrPath(events: QueueIvrData[]): QueueIvrData[] {
-  const pathMap = new Map<string, string>();
-  const sortedEvents = events.sort((a,b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
-  
-  return sortedEvents.map(event => {
-    // Get the path as it was *before* this event.
-    const previousPath = pathMap.get(event.call_id) || 'Entry';
-    
-    let nextPath = previousPath;
+function assignIvrPathAndDuration(events: (Omit<QueueIvrData, "ivr_path" | "duration">)[]): QueueIvrData[] {
+  const groupedByCall = new Map<string, (Omit<QueueIvrData, "ivr_path" | "duration">)[]>();
 
-    if (event.event_type === 'ExitIVR' && event.queue_name) {
-       // When exiting to an agent/queue, add that queue to the path
-       if (!nextPath.endsWith(event.queue_name)) {
-         nextPath = `${nextPath} -> ${event.queue_name}`;
-       }
-    } else if (event.event_type === 'KeyPress') {
-        // Only add "Keypress" if it's not already the last step
-        if (!nextPath.endsWith('Keypress')) {
-            nextPath = `${nextPath} -> Keypress`;
-        }
-    } else if (event.queue_name && !nextPath.endsWith(event.queue_name)) {
-        // For other events, if a queue is involved, add it.
-        nextPath = `${nextPath} -> ${event.queue_name}`;
+  // Group events by call_id
+  for (const event of events) {
+    if (!groupedByCall.has(event.call_id)) {
+      groupedByCall.set(event.call_id, []);
     }
-    
-    // Update the map for the *next* event to use.
-    pathMap.set(event.call_id, nextPath);
+    groupedByCall.get(event.call_id)!.push(event);
+  }
 
-    // Assign the path as it was *before* this event happened.
-    return {
-      ...event,
-      ivr_path: previousPath
-    };
-  });
+  const result: QueueIvrData[] = [];
+
+  // Process each group
+  for (const group of groupedByCall.values()) {
+    // Sort events within the group chronologically
+    const sortedGroup = group.sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime());
+    
+    let currentPath = 'Entry';
+    
+    for (let i = 0; i < sortedGroup.length; i++) {
+      const event = sortedGroup[i];
+      
+      // Calculate duration: time until the next event
+      const duration = (i < sortedGroup.length - 1)
+        ? (new Date(sortedGroup[i + 1].datetime).getTime() - new Date(event.datetime).getTime()) / 1000
+        : undefined; // No duration for the last event
+
+      // Assign the path as it was *before* this event
+      const eventWithPath = { ...event, ivr_path: currentPath, duration };
+      result.push(eventWithPath);
+
+      // Update the path for the *next* event
+      if (event.event_type === 'ExitIVR' && event.queue_name) {
+         if (!currentPath.endsWith(event.queue_name)) {
+           currentPath = `${currentPath} -> ${event.queue_name}`;
+         }
+      } else if (event.event_type === 'KeyPress') {
+          if (!currentPath.endsWith('Keypress')) {
+              currentPath = `${currentPath} -> Keypress`;
+          }
+      } else if (event.queue_name && !currentPath.endsWith(event.queue_name)) {
+          currentPath = `${currentPath} -> ${event.queue_name}`;
+      }
+    }
+  }
+
+  return result;
 }
 
 
@@ -112,7 +127,7 @@ export async function POST(request: Request) {
     console.log("Données d'appel avancées reçues via /api/stream/advanced-calls:", newData);
 
     const allAdvancedData = await readData<AdvancedCallData>(advancedDataFilePath);
-    const allQueueIvrData = await readData<QueueIvrData>(queueIvrDataFilePath);
+    let allQueueIvrData = await readData<Omit<QueueIvrData, "ivr_path" | "duration">>(queueIvrDataFilePath);
     
     const dataToProcess = Array.isArray(newData) ? newData : [newData];
     
@@ -129,9 +144,10 @@ export async function POST(request: Request) {
       // Logic to map to IVR event
       const ivrEvent = mapToIvrEvent(call);
       if (ivrEvent) {
+          // Prevent duplicates
           const existingEventIndex = allQueueIvrData.findIndex(e => e.datetime === ivrEvent.datetime && e.call_id === ivrEvent.call_id);
           if (existingEventIndex === -1) {
-              allQueueIvrData.push({ ...ivrEvent, ivr_path: '' }); // Add with temporary empty path
+              allQueueIvrData.push(ivrEvent);
           }
       }
     });
@@ -139,8 +155,9 @@ export async function POST(request: Request) {
     // Add new data to existing data
     allAdvancedData.push(...dataToProcess);
     
+    // Always re-calculate paths and durations for the entire dataset to ensure correctness
     if(allQueueIvrData.length > 0) {
-      const processedIvrData = assignIvrPath(allQueueIvrData);
+      const processedIvrData = assignIvrPathAndDuration(allQueueIvrData);
       await writeData(queueIvrDataFilePath, processedIvrData);
     }
    

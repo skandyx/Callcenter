@@ -7,7 +7,7 @@
     "calling_number": "003228807241",
     "event_type": "Timeout",
     "event_detail": "IVR hangup by timeout",
-    "ivr_path": "Entry -> aze2"
+    "ivr_path": "Entry"
   },
   {
     "datetime": "2025-07-11T14:47:47.182",
@@ -15,7 +15,7 @@
     "queue_name": "A-1",
     "calling_number": "003228807241",
     "event_type": "ExitIVR",
-    "event_detail": "Connected to agent A-1",
+    "event_detail": "Connected to agent",
     "ivr_path": "Entry"
   },
   {
@@ -25,7 +25,7 @@
     "calling_number": "003228807241",
     "event_type": "Timeout",
     "event_detail": "IVR hangup by timeout",
-    "ivr_path": "Entry -> SMSTOCALLER"
+    "ivr_path": "Entry"
   },
   {
     "datetime": "2025-07-12T23:05:16.404",
@@ -34,7 +34,7 @@
     "calling_number": "003228807241",
     "event_type": "ExitIVR",
     "event_detail": "Direct redirect to 091358259950911618",
-    "ivr_path": "Entry -> aze"
+    "ivr_path": "Entry"
   },
   {
     "datetime": "2025-07-12T23:06:13.424",
@@ -43,7 +43,8 @@
     "calling_number": "003228807241",
     "event_type": "KeyPress",
     "event_detail": "Pressed digit for redirect to 003228829695",
-    "ivr_path": "Entry -> aze"
+    "ivr_path": "Entry -> aze",
+    "duration": 7.902
   },
   {
     "datetime": "2025-07-12T23:06:21.326",
@@ -51,7 +52,8 @@
     "queue_name": "A-1",
     "calling_number": "003228807241",
     "event_type": "ExitIVR",
-    "event_detail": "Connected to agent A-1",
-    "ivr_path": "Entry -> aze -> Keypress"
+    "event_detail": "Connected to agent",
+    "ivr_path": "Entry -> aze -> Keypress",
+    "duration": 3.187
   }
 ]

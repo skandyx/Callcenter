@@ -97,4 +97,6 @@ export type QueueIvrData = {
   ivr_path: string;
   event_type: "EnterIVR" | "KeyPress" | "EnterQueue" | "ExitIVR" | "Timeout" | "Hangup";
   event_detail: string;
+  duration?: number;
 };
+
