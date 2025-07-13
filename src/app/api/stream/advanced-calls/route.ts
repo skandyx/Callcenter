@@ -37,6 +37,7 @@ function mapStatusToIvrEvent(call: AdvancedCallData): QueueIvrData['event_type']
     if (detail.includes('timeout')) return 'Timeout';
     if (detail.includes('digit press')) return 'KeyPress';
     if (detail.includes('redirect')) return 'ExitIVR';
+    if (detail.includes('ivr')) return 'EnterIVR';
     return null; // Not a mappable IVR event
 }
 
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
       }
 
       // Check if the call is an IVR event and transform it
-      if (call.status === 'IVR') {
+      if (call.status === 'IVR' || (call.status_detail && call.status_detail.toLowerCase().includes('ivr'))) {
           const ivrEvent = transformToIvrData(call);
           if (ivrEvent) {
               newIvrEvents.push(ivrEvent);
@@ -95,7 +96,9 @@ export async function POST(request: Request) {
 
     // Add new data to existing data
     allAdvancedData.push(...dataToProcess);
-    allQueueIvrData.push(...newIvrEvents);
+    if (newIvrEvents.length > 0) {
+        allQueueIvrData.push(...newIvrEvents);
+    }
 
     // Write updated data back to files
     await writeData(advancedDataFilePath, allAdvancedData);
