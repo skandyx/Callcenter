@@ -22,6 +22,11 @@ async function writeData(data: ProfileAvailabilityData[]): Promise<void> {
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
 }
 
+export async function GET() {
+  const data = await readData();
+  return NextResponse.json(data);
+}
+
 export async function POST(request: Request) {
   try {
     const newData: ProfileAvailabilityData | ProfileAvailabilityData[] = await request.json();

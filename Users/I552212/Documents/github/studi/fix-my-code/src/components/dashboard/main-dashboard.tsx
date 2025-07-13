@@ -123,9 +123,22 @@ export default function MainDashboard() {
   }, []);
 
   const fetchProfileAvailabilityData = useCallback(async () => {
-    // This endpoint doesn't exist yet as GET, so we just log for now
-    // In a future step, a GET endpoint would be created.
-    return false;
+    let dataReceived = false;
+    try {
+        const response = await fetch('/api/stream/profile-availability');
+        if (!response.ok) throw new Error('Network response was not ok for profile availability data');
+        const data: ProfileAvailabilityData[] = await response.json();
+        setAllProfileAvailabilityData(prevData => {
+            if (JSON.stringify(data) !== JSON.stringify(prevData)) {
+                dataReceived = true;
+                return data;
+            }
+            return prevData;
+        });
+    } catch (error) {
+        console.error("Failed to fetch profile availability data:", error);
+    }
+    return dataReceived;
   }, []);
 
 
@@ -195,6 +208,12 @@ export default function MainDashboard() {
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     return allQueueIvrData.filter(d => new Date(d.datetime).toISOString().split('T')[0] === formattedDate);
   }, [allQueueIvrData, selectedDate]);
+
+  const filteredProfileAvailabilityData = useMemo(() => {
+    if (!selectedDate) return allProfileAvailabilityData;
+    const formattedDate = format(selectedDate, "yyyy-MM-dd");
+    return allProfileAvailabilityData.filter(d => d.date === formattedDate);
+  }, [allProfileAvailabilityData, selectedDate]);
 
   const ledColorClass = {
     inactive: 'bg-red-500',
@@ -292,6 +311,7 @@ export default function MainDashboard() {
                     advancedCallData={filteredAdvancedCallData}
                     agentStatusData={filteredAgentStatusData}
                     queueIvrData={filteredQueueIvrData}
+                    profileAvailabilityData={filteredProfileAvailabilityData}
                 />
               </div>
             )}
