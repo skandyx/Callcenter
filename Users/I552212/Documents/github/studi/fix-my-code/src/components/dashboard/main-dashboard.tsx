@@ -68,7 +68,7 @@ export default function MainDashboard() {
   const fetchAdvancedCallData = useCallback(async () => {
     let dataReceived = false;
     try {
-      const response = await fetch('/api/advanced-call-data');
+      const response = await fetch('/api/stream/advanced-calls');
       if (!response.ok) throw new Error('Network response was not ok for advanced call data');
       const data: AdvancedCallData[] = await response.json();
       setAllAdvancedCallData(prevData => {
@@ -87,7 +87,7 @@ export default function MainDashboard() {
   const fetchAgentStatusData = useCallback(async () => {
     let dataReceived = false;
     try {
-      const response = await fetch('/api/agent-status-data');
+      const response = await fetch('/api/stream/agent-status');
       if (!response.ok) throw new Error('Network response was not ok for agent status data');
       const data: AgentStatusData[] = await response.json();
       setAllAgentStatusData(prevData => {
