@@ -20,23 +20,20 @@ interface CallAnalyticsTabsProps {
 
 export default function CallAnalyticsTabs({ callData, advancedCallData, agentStatusData, queueIvrData }: CallAnalyticsTabsProps) {
   return (
-    <Tabs defaultValue="log">
+    <Tabs defaultValue="simplified">
       <ScrollArea className="w-full whitespace-nowrap">
         <TabsList className="grid w-max grid-cols-6">
-          <TabsTrigger value="log">Call Log</TabsTrigger>
-          <TabsTrigger value="status">Status Details</TabsTrigger>
-          <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-          <TabsTrigger value="map">World Map</TabsTrigger>
-          <TabsTrigger value="queue-ivr">Queue & IVR</TabsTrigger>
+          <TabsTrigger value="simplified">Données d'appel simplifiées</TabsTrigger>
+          <TabsTrigger value="advanced">Données d'appel avancées</TabsTrigger>
+          <TabsTrigger value="agent-status">Disponibilité des agents</TabsTrigger>
+          <TabsTrigger value="queue-ivr">Parcours IVR (avancé)</TabsTrigger>
+          <TabsTrigger value="status-details">Analyse par statut</TabsTrigger>
+          <TabsTrigger value="map">Carte du monde</TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      <TabsContent value="log" className="mt-4">
+      <TabsContent value="simplified" className="mt-4">
         <CallLog data={callData} />
-      </TabsContent>
-      <TabsContent value="status" className="mt-4">
-        <StatusDetailsChart data={callData} />
       </TabsContent>
        <TabsContent value="agent-status" className="mt-4">
         <AgentStatusLog data={agentStatusData} />
@@ -49,6 +46,9 @@ export default function CallAnalyticsTabs({ callData, advancedCallData, agentSta
       </TabsContent>
       <TabsContent value="queue-ivr" className="mt-4">
         <QueueIvrLog data={queueIvrData} callData={callData} />
+      </TabsContent>
+      <TabsContent value="status-details" className="mt-4">
+        <StatusDetailsChart data={callData} />
       </TabsContent>
     </Tabs>
   );
