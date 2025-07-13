@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-const simplifiedDataPath = path.join(process.cwd(), "call-data.json");
-const advancedDataPath = path.join(process.cwd(), "advanced-call-data.json");
-const agentStatusDataPath = path.join(process.cwd(), "agent-status-data.json");
-const profileAvailabilityDataPath = path.join(process.cwd(), "profile-availability-data.json");
+const dataDir = path.join(process.cwd(), "Datas-json");
+const simplifiedDataPath = path.join(dataDir, "call-data.json");
+const advancedDataPath = path.join(dataDir, "advanced-call-data.json");
+const agentStatusDataPath = path.join(dataDir, "agent-status-data.json");
+const profileAvailabilityDataPath = path.join(dataDir, "profile-availability-data.json");
 
 
 async function clearFile(filePath: string): Promise<void> {
@@ -16,6 +17,10 @@ async function clearFile(filePath: string): Promise<void> {
     } catch (error: any) {
         if (error.code === 'ENOENT') {
             console.log(`File not found, no need to clear: ${filePath}`);
+            // Attempt to create the directory if it doesn't exist
+            await fs.mkdir(path.dirname(filePath), { recursive: true });
+            await fs.writeFile(filePath, "[]", "utf8");
+            console.log(`Created new empty file: ${filePath}`);
         } else {
             throw error;
         }
@@ -24,6 +29,7 @@ async function clearFile(filePath: string): Promise<void> {
 
 export async function POST() {
     try {
+        await fs.mkdir(dataDir, { recursive: true });
         await clearFile(simplifiedDataPath);
         await clearFile(advancedDataPath);
         await clearFile(agentStatusDataPath);

@@ -1,10 +1,10 @@
+
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { type ProfileAvailabilityData } from "@/lib/types";
 
 const dataDir = path.join(process.cwd(), "Datas-json");
-const dataFilePath = path.join(dataDir, "profile-availability-data.json");
+const dataFilePath = path.join(dataDir, "agent-status-data.json");
 
 async function ensureDirectoryExists() {
   try {
@@ -14,7 +14,7 @@ async function ensureDirectoryExists() {
   }
 }
 
-async function readData(): Promise<ProfileAvailabilityData[]> {
+async function readData(): Promise<any[]> {
   try {
     await ensureDirectoryExists();
     const fileContent = await fs.readFile(dataFilePath, "utf8");
@@ -24,25 +24,20 @@ async function readData(): Promise<ProfileAvailabilityData[]> {
       await fs.writeFile(dataFilePath, "[]", "utf8");
       return []; 
     }
-    console.error("Error reading profile availability data file:", error);
+    console.error("Error reading agent status data file:", error);
     return [];
   }
 }
 
-async function writeData(data: ProfileAvailabilityData[]): Promise<void> {
+async function writeData(data: any[]): Promise<void> {
   await ensureDirectoryExists();
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
 }
 
-export async function GET() {
-  const data = await readData();
-  return NextResponse.json(data);
-}
-
 export async function POST(request: Request) {
   try {
-    const newData: ProfileAvailabilityData | ProfileAvailabilityData[] = await request.json();
-    console.log("Données de disponibilité des profils reçues via /api/stream/profile-availability:", newData);
+    const newData = await request.json();
+    console.log("Données de disponibilité des agents reçues via /api/stream/agent-status:", newData);
 
     const allData = await readData();
 
@@ -55,11 +50,11 @@ export async function POST(request: Request) {
     await writeData(allData);
 
     return NextResponse.json(
-      { message: "Données de disponibilité des profils reçues et traitées avec succès." },
+      { message: "Données de disponibilité des agents reçues et traitées avec succès.", data: allData },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Erreur lors du traitement du flux de disponibilité des profils:", error);
+    console.error("Erreur lors du traitement du flux de disponibilité des agents:", error);
     return NextResponse.json(
       { message: "Format JSON invalide" },
       { status: 400 }

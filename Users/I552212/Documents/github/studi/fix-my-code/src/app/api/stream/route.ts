@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
+import { type CallData } from "@/lib/types";
 import fs from "fs/promises";
 import path from "path";
-import { type ProfileAvailabilityData } from "@/lib/types";
 
 const dataDir = path.join(process.cwd(), "Datas-json");
-const dataFilePath = path.join(dataDir, "profile-availability-data.json");
+const dataFilePath = path.join(dataDir, "call-data.json");
 
 async function ensureDirectoryExists() {
   try {
@@ -14,7 +14,7 @@ async function ensureDirectoryExists() {
   }
 }
 
-async function readData(): Promise<ProfileAvailabilityData[]> {
+async function readData(): Promise<CallData[]> {
   try {
     await ensureDirectoryExists();
     const fileContent = await fs.readFile(dataFilePath, "utf8");
@@ -22,14 +22,14 @@ async function readData(): Promise<ProfileAvailabilityData[]> {
   } catch (error: any) {
     if (error.code === 'ENOENT') {
       await fs.writeFile(dataFilePath, "[]", "utf8");
-      return []; 
+      return [];
     }
-    console.error("Error reading profile availability data file:", error);
+    console.error("Error reading data file:", error);
     return [];
   }
 }
 
-async function writeData(data: ProfileAvailabilityData[]): Promise<void> {
+async function writeData(data: CallData[]): Promise<void> {
   await ensureDirectoryExists();
   await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf8");
 }
@@ -41,25 +41,33 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const newData: ProfileAvailabilityData | ProfileAvailabilityData[] = await request.json();
-    console.log("Données de disponibilité des profils reçues via /api/stream/profile-availability:", newData);
+    const newData: CallData | CallData[] = await request.json();
+    console.log("Données reçues du PBX via /api/stream:", newData);
 
     const allData = await readData();
 
-    if (Array.isArray(newData)) {
-      allData.push(...newData);
-    } else {
-      allData.push(newData);
-    }
+    const dataToProcess = Array.isArray(newData) ? newData : [newData];
+
+    dataToProcess.forEach(call => {
+      if (call.parent_call_id) {
+        const parentCall = allData.find(c => c.call_id === call.parent_call_id) || dataToProcess.find(c => c.call_id === call.parent_call_id);
+        if (parentCall && parentCall.parent_call_id) {
+          call.parent_call_id = parentCall.parent_call_id;
+        }
+      }
+    });
+
+    allData.push(...dataToProcess);
 
     await writeData(allData);
 
     return NextResponse.json(
-      { message: "Données de disponibilité des profils reçues et traitées avec succès." },
+      { message: "Données reçues et traitées avec succès.", data: allData },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Erreur lors du traitement du flux de disponibilité des profils:", error);
+  } catch (error)
+  {
+    console.error("Erreur lors du traitement du flux de données entrant:", error);
     return NextResponse.json(
       { message: "Format JSON invalide" },
       { status: 400 }
