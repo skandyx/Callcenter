@@ -27,83 +27,82 @@ import { ArrowRightLeft, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
-const ROWS_PER_PAGE = 20; // Increased to better show groups
+const ROWS_PER_PAGE = 20;
 
 interface AdvancedCallLogProps {
   data: AdvancedCallData[];
 }
 
-type GroupedCall = {
-  parent: AdvancedCallData;
-  children: AdvancedCallData[];
-};
+type GroupedCall = AdvancedCallData[];
 
 export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const groupedData = useMemo(() => {
-    const callMap = new Map<string, AdvancedCallData>();
-    data.forEach(call => callMap.set(call.call_id, call));
+    if (!data || data.length === 0) return [];
 
-    const callGroups = new Map<string, GroupedCall>();
-    const rootCalls: AdvancedCallData[] = [];
+    const callGroups = new Map<string, AdvancedCallData[]>();
+    const rootCallIds = new Set<string>();
 
-    // First pass: identify root calls and group children
+    // Pass 1: Group all calls by their ultimate parent ID
     data.forEach(call => {
-      if (!call.parent_call_id || !callMap.has(call.parent_call_id)) {
-        // This is a root call
-        rootCalls.push(call);
-        if (!callGroups.has(call.call_id)) {
-            callGroups.set(call.call_id, { parent: call, children: [] });
+        const parentId = call.parent_call_id || call.call_id;
+        if (!callGroups.has(parentId)) {
+            callGroups.set(parentId, []);
         }
-      } else {
-        // This is a child call, find its ultimate parent
-        let currentCall = call;
-        let ultimateParent = callMap.get(currentCall.parent_call_id);
-        const visited = new Set<string>([currentCall.call_id]);
-
-        while (ultimateParent && ultimateParent.parent_call_id && callMap.has(ultimateParent.parent_call_id)) {
-          if (visited.has(ultimateParent.call_id)) break; // Cycle detected
-          visited.add(ultimateParent.call_id);
-          ultimateParent = callMap.get(ultimateParent.parent_call_id);
+        callGroups.get(parentId)!.push(call);
+        
+        // If a call has no parent, it's a potential root
+        if (!call.parent_call_id) {
+            rootCallIds.add(call.call_id);
         }
-
-        if (ultimateParent) {
-            if (!callGroups.has(ultimateParent.call_id)) {
-                callGroups.set(ultimateParent.call_id, { parent: ultimateParent, children: [] });
-            }
-            // Add the original call to children, not the intermediate parent
-            callGroups.get(ultimateParent.call_id)!.children.push(call);
-        }
-      }
     });
 
-    // Sort children chronologically within each group
-    callGroups.forEach(group => {
-      group.children.sort((a, b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
+    const finalGroups: GroupedCall[] = [];
+
+    // Pass 2: Process groups
+    callGroups.forEach((group, parentId) => {
+        // Find the actual root call in the group (the one with no parent_call_id or the earliest one)
+        let rootCall = group.find(c => c.call_id === parentId && !c.parent_call_id);
+        if (!rootCall) {
+            // If the parent isn't in this group, or if all have parents, find the earliest as the "effective" root for sorting
+            group.sort((a,b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
+            rootCall = group[0];
+        }
+
+        // Sort all calls within the group chronologically
+        group.sort((a,b) => new Date(a.enter_datetime).getTime() - new Date(b.enter_datetime).getTime());
+        
+        finalGroups.push(group);
     });
 
-    // Combine parent and sorted children into a final list of groups
-    const finalGroups = Array.from(callGroups.values());
-
-    // Sort the groups by the parent's datetime in descending order
-    return finalGroups.sort((a, b) => new Date(b.parent.enter_datetime).getTime() - new Date(a.parent.enter_datetime).getTime());
+    // Sort all the groups based on their root call's datetime, descending
+    return finalGroups.sort((groupA, groupB) => {
+        const timeA = new Date(groupA[0].enter_datetime).getTime();
+        const timeB = new Date(groupB[0].enter_datetime).getTime();
+        return timeB - timeA;
+    });
 
   }, [data]);
 
   const filteredAndPaginatedData = useMemo(() => {
-     const lowercasedFilter = filter.toLowerCase();
-     let filteredGroups = groupedData;
-
-     if (filter) {
-        filteredGroups = groupedData.filter(group => {
-            const parentMatch = Object.values(group.parent).some(val => String(val).toLowerCase().includes(lowercasedFilter));
-            const childrenMatch = group.children.some(child => Object.values(child).some(val => String(val).toLowerCase().includes(lowercasedFilter)));
-            return parentMatch || childrenMatch;
-        });
+     if (!filter) {
+        return groupedData.slice(
+            (currentPage - 1) * ROWS_PER_PAGE,
+            currentPage * ROWS_PER_PAGE
+        );
      }
      
+     const lowercasedFilter = filter.toLowerCase();
+     const filteredGroups = groupedData.filter(group => 
+        group.some(call => 
+            Object.values(call).some(val => 
+                String(val).toLowerCase().includes(lowercasedFilter)
+            )
+        )
+     );
+
      return filteredGroups.slice(
         (currentPage - 1) * ROWS_PER_PAGE,
         currentPage * ROWS_PER_PAGE
@@ -243,9 +242,8 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
               <TableBody>
                 {filteredAndPaginatedData.length > 0 ? (
                     filteredAndPaginatedData.map(group => (
-                        <Fragment key={group.parent.call_id}>
-                            {renderCallRow(group.parent, false)}
-                            {group.children.map(child => renderCallRow(child, true))}
+                        <Fragment key={group[0].parent_call_id || group[0].call_id}>
+                            {group.map((call, index) => renderCallRow(call, index > 0))}
                         </Fragment>
                     ))
                 ) : (
