@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, Users } from "lucide-react";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "../ui/tooltip";
 
 const ROWS_PER_PAGE = 10;
@@ -135,7 +135,14 @@ export default function CallLog({ data }: { data: CallData[] }) {
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((call, index) => (
+                paginatedData.map((call, index) => {
+                  const isOutgoingWithPresentedCli = 
+                      call.status_detail?.toLowerCase().includes("outgoing") &&
+                      call.presented_number && 
+                      call.agent_number && 
+                      call.presented_number !== call.agent_number;
+
+                  return (
                   <TableRow key={`${call.call_id}-${index}`}>
                      <TableCell>
                       {new Date(call.enter_datetime).toLocaleDateString()}
@@ -151,12 +158,20 @@ export default function CallLog({ data }: { data: CallData[] }) {
                               {call.status_detail?.toLowerCase().includes("incoming") && (
                                 <ArrowDownCircle className="h-4 w-4 text-green-500" />
                               )}
-                              {call.status_detail?.toLowerCase().includes("outgoing") && (
+                              {isOutgoingWithPresentedCli ? (
+                                <Users className="h-4 w-4 text-blue-500" />
+                               ) : (
+                                call.status_detail?.toLowerCase().includes("outgoing") && (
                                 <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                               )
                               )}
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>{call.status_detail}</p>
+                               {isOutgoingWithPresentedCli ? (
+                                  <p>Présenté : {call.presented_number} (Agent : {call.agent_number})</p>
+                                ) : (
+                                  <p>{call.status_detail}</p>
+                                )}
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -173,7 +188,7 @@ export default function CallLog({ data }: { data: CallData[] }) {
                       </Badge>
                     </TableCell>
                   </TableRow>
-                ))
+                )})
               ) : (
                 <TableRow>
                   <TableCell

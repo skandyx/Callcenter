@@ -27,6 +27,7 @@ export type CallData = {
   agent_id: string | null;
   agent_number: string | null;
   parent_call_id?: string | null;
+  presented_number?: string | null;
 };
 
 export type AdvancedCallData = CallData & {

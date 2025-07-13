@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from "@/lib/utils";
-import { ArrowRightLeft, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowRightLeft, ArrowDownCircle, ArrowUpCircle, Users } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
@@ -129,8 +129,13 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
   const renderCallRow = (item: AdvancedCallData, isChild: boolean) => {
     const isActualTransfer = item.status_detail.toLowerCase().includes('transfer');
     
-    // Display agent name only if it's different from the queue name
     const agentDisplay = (item.agent?.trim() === item.queue_name?.trim()) ? "-" : item.agent || "N/A";
+
+    const isOutgoingWithPresentedCli = 
+      item.status_detail?.toLowerCase().includes("outgoing") &&
+      item.presented_number && 
+      item.agent_number && 
+      item.presented_number !== item.agent_number;
     
     return (
        <TableRow 
@@ -154,29 +159,35 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
           <TableCell className="font-medium align-top">
             <div className="flex items-center gap-2">
                <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger>
-                      <>
-                        {item.status_detail?.toLowerCase().includes("incoming") && (
-                            <ArrowDownCircle className="h-4 w-4 text-green-500" />
-                        )}
-                        {item.status_detail?.toLowerCase().includes("outgoing") && (
-                            <ArrowUpCircle className="h-4 w-4 text-red-500" />
-                        )}
-                        {item.parent_call_id && isActualTransfer && (
-                            <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>{item.status_detail}</p>
-                        {item.parent_call_id && isActualTransfer && (
-                          <>
+                  <Tooltip>
+                      <TooltipTrigger>
+                        <>
+                          {item.status_detail?.toLowerCase().includes("incoming") && (
+                              <ArrowDownCircle className="h-4 w-4 text-green-500" />
+                          )}
+                          {isOutgoingWithPresentedCli ? (
+                              <Users className="h-4 w-4 text-blue-500" />
+                          ) : (
+                            item.status_detail?.toLowerCase().includes("outgoing") && (
+                                <ArrowUpCircle className="h-4 w-4 text-red-500" />
+                            )
+                          )}
+                          {item.parent_call_id && isActualTransfer && (
+                              <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                          {isOutgoingWithPresentedCli ? (
+                            <p>Présenté : {item.presented_number} (Agent : {item.agent_number})</p>
+                          ) : (
+                            <p>{item.status_detail}</p>
+                          )}
+                          {item.parent_call_id && isActualTransfer && (
                             <p className="text-xs text-muted-foreground">ID: {item.parent_call_id}</p>
-                          </>
-                        )}
-                    </TooltipContent>
-                </Tooltip>
+                          )}
+                      </TooltipContent>
+                  </Tooltip>
                </TooltipProvider>
               <span>{item.calling_number}</span>
             </div>
