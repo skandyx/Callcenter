@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { type AdvancedCallData } from "@/lib/types";
 import {
   Table,
@@ -243,10 +243,10 @@ export default function AdvancedCallLog({ data }: AdvancedCallLogProps) {
               <TableBody>
                 {filteredAndPaginatedData.length > 0 ? (
                     filteredAndPaginatedData.map(group => (
-                        <>
+                        <Fragment key={group.parent.call_id}>
                             {renderCallRow(group.parent, false)}
                             {group.children.map(child => renderCallRow(child, true))}
-                        </>
+                        </Fragment>
                     ))
                 ) : (
                   <TableRow>
