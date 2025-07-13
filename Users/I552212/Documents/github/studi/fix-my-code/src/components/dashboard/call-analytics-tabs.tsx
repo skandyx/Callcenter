@@ -8,24 +8,33 @@ import AgentStatusLog from "./agent-status-log";
 import AdvancedCallLog from "./advanced-call-log";
 import WorldMapChart from "./world-map-chart";
 import QueueIvrLog from "./queue-ivr-log";
-import { type CallData, type AdvancedCallData, type AgentStatusData, type QueueIvrData } from "@/lib/types";
+import { type CallData, type AdvancedCallData, type AgentStatusData, type QueueIvrData, type ProfileAvailabilityData } from "@/lib/types";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import ProfileAvailabilityChart from "./profile-availability-chart";
 
 interface CallAnalyticsTabsProps {
   callData: CallData[];
   advancedCallData: AdvancedCallData[];
   agentStatusData: AgentStatusData[];
   queueIvrData: QueueIvrData[];
+  profileAvailabilityData: ProfileAvailabilityData[];
 }
 
-export default function CallAnalyticsTabs({ callData, advancedCallData, agentStatusData, queueIvrData }: CallAnalyticsTabsProps) {
+export default function CallAnalyticsTabs({ 
+  callData, 
+  advancedCallData, 
+  agentStatusData, 
+  queueIvrData,
+  profileAvailabilityData
+}: CallAnalyticsTabsProps) {
   return (
     <Tabs defaultValue="simplified">
       <ScrollArea className="w-full whitespace-nowrap">
-        <TabsList className="grid w-max grid-cols-6">
+        <TabsList className="grid w-max grid-cols-7">
           <TabsTrigger value="simplified">Données d'appel simplifiées</TabsTrigger>
           <TabsTrigger value="advanced">Données d'appel avancées</TabsTrigger>
           <TabsTrigger value="agent-status">Disponibilité des agents</TabsTrigger>
+          <TabsTrigger value="profile-availability">Disponibilité des profils</TabsTrigger>
           <TabsTrigger value="queue-ivr">Parcours IVR (avancé)</TabsTrigger>
           <TabsTrigger value="status-details">Analyse par statut</TabsTrigger>
           <TabsTrigger value="map">Call Distribution by Country</TabsTrigger>
@@ -41,6 +50,9 @@ export default function CallAnalyticsTabs({ callData, advancedCallData, agentSta
       <TabsContent value="advanced" className="mt-4">
         <AdvancedCallLog data={advancedCallData} />
       </TabsContent>
+       <TabsContent value="profile-availability" className="mt-4">
+        <ProfileAvailabilityChart data={profileAvailabilityData} />
+      </TabsContent>
       <TabsContent value="map" className="mt-4">
         <WorldMapChart data={callData} />
       </TabsContent>
@@ -53,3 +65,4 @@ export default function CallAnalyticsTabs({ callData, advancedCallData, agentSta
     </Tabs>
   );
 }
+
