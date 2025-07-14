@@ -33,11 +33,11 @@ export default function CallAnalyticsTabs({
         <TabsList className="grid w-max grid-cols-7">
           <TabsTrigger value="simplified">Données d'appel simplifiées</TabsTrigger>
           <TabsTrigger value="advanced">Données d'appel avancées</TabsTrigger>
-          <TabsTrigger value="agent-status">Disponibilité des agents</TabsTrigger>
-          <TabsTrigger value="profile-availability">Disponibilité des profils</TabsTrigger>
           <TabsTrigger value="queue-ivr">Parcours IVR (avancé)</TabsTrigger>
           <TabsTrigger value="status-details">Analyse par statut</TabsTrigger>
-          <TabsTrigger value="map">Carte du monde</TabsTrigger>
+          <TabsTrigger value="map">Call Distribution by Country</TabsTrigger>
+          <TabsTrigger value="agent-status">Disponibilité des agents</TabsTrigger>
+          <TabsTrigger value="profile-availability">Disponibilité des profils</TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -47,23 +47,21 @@ export default function CallAnalyticsTabs({
       <TabsContent value="advanced" className="mt-4">
         <AdvancedCallLog data={advancedCallData} />
       </TabsContent>
+      <TabsContent value="queue-ivr" className="mt-4">
+        <QueueIvrLog data={queueIvrData} callData={callData} />
+      </TabsContent>
+       <TabsContent value="status-details" className="mt-4">
+        <StatusDetailsChart data={callData} />
+      </TabsContent>
+      <TabsContent value="map" className="mt-4">
+        <WorldMapChart data={callData} />
+      </TabsContent>
        <TabsContent value="agent-status" className="mt-4">
         <AgentStatusLog data={agentStatusData} />
       </TabsContent>
        <TabsContent value="profile-availability" className="mt-4">
         <ProfileAvailabilityChart data={profileAvailabilityData} />
       </TabsContent>
-      <TabsContent value="queue-ivr" className="mt-4">
-        <QueueIvrLog data={queueIvrData} callData={callData} />
-      </TabsContent>
-      <TabsContent value="status-details" className="mt-4">
-        <StatusDetailsChart data={callData} />
-      </TabsContent>
-      <TabsContent value="map" className="mt-4">
-        <WorldMapChart data={callData} />
-      </TabsContent>
     </Tabs>
   );
 }
-
-    
