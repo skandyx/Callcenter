@@ -12,80 +12,28 @@ L'application est composée de deux vues principales :
 
 - **Framework Frontend** : Next.js (avec App Router)
 - **Langage** : TypeScript
-- **Styling** : Tailwind CSS
-- **Composants UI** : shadcn/ui
-- **Icônes** : lucide-react
+- **Styling** : Tailwind CSS & shadcn/ui
 - **Graphiques** : Recharts
-- **IA Générative** : Genkit (utilisant les modèles Google AI comme Gemini)
-- **Serveur Backend** : Les points de terminaison de l'API sont construits avec les Route Handlers de Next.js.
-- **Persistance des données** : Les données sont stockées sous forme de fichiers JSON à la racine du projet, simulant une base de données simple et garantissant le partage d'état entre les invocations de fonctions serverless.
+- **IA Générative** : Genkit (Google AI)
+- **Serveur Backend** : Route Handlers de Next.js.
+- **Persistance des données** : Fichiers JSON stockés dans le dossier `Datas-json/` à la racine du projet.
 
-## 3. Structure des Données
+## 3. Points de terminaison des flux de données (Streams)
 
-L'application gère plusieurs types de données, définis dans `src/lib/types.ts` :
+Pour que l'application fonctionne, le système PBX doit être configuré pour envoyer des données via des requêtes HTTP POST aux points de terminaison (endpoints) suivants. Les URLs complètes peuvent être copiées depuis la boîte de dialogue "Paramètres" dans l'application.
 
-- **`CallData`** (Données d'appel simplifiées) : Un enregistrement par appel principal. Contient des informations comme l'heure, le numéro de l'appelant, l'agent, le statut (`Completed`, `Abandoned`), les temps d'attente et de traitement.
-- **`AdvancedCallData`** (Données d'appel avancées) : Étend `CallData`. Un appel peut générer plusieurs enregistrements pour tracer les transferts, les tentatives, etc. Utilise `parent_call_id` pour lier les événements d'un même appel.
-- **`AgentStatusData`** : Rapports horaires sur l'activité des agents (temps de connexion, de déconnexion, d'inactivité) par file d'attente.
-- **`QueueIvrData`** : Trace le parcours de l'appelant dans le système vocal interactif (IVR) et les files d'attente (entrée dans l'IVR, touches pressées, sortie vers un agent, raccrochage).
+1.  **Données d'appel simplifiées**
+    *   **Endpoint** : `/api/stream`
+    *   **Description** : Envoie un enregistrement de base pour chaque appel terminé, abandonné, etc. (Type: `CallData`)
 
-## 4. Flux des Données
+2.  **Données d'appel avancées**
+    *   **Endpoint** : `/api/stream/advanced-calls`
+    *   **Description** : Envoie des enregistrements détaillés pour chaque événement d'un appel (transfert, mise en attente, IVR, etc.). Plusieurs enregistrements peuvent être envoyés pour un seul appel. (Type: `AdvancedCallData`)
 
-1.  **Réception** : Le PBX externe envoie des données via des requêtes HTTP `POST` à des points de terminaison spécifiques de l'API (ex: `/api/stream/advanced-calls`).
-2.  **Traitement & Stockage** : Chaque point de terminaison de l'API (`route.ts`) lit le fichier JSON correspondant (ex: `advanced-call-data.json`), ajoute les nouvelles données reçues, et réécrit le fichier complet. Une logique de base (comme la propagation de `parent_call_id`) est appliquée ici.
-3.  **Affichage** :
-    - Le frontend (principalement `main-dashboard.tsx`) interroge périodiquement les points de terminaison `GET` de l'API (ex: `GET /api/advanced-call-data`) pour récupérer l'intégralité des données.
-    - Les données sont stockées dans l'état React du composant.
-    - Les composants enfants reçoivent ces données en props et les affichent sous forme de graphiques, de tableaux et de KPIs.
+3.  **Disponibilité des agents**
+    *   **Endpoint** : `/api/stream/agent-status`
+    *   **Description** : Envoie des statistiques sur l'état des agents (connecté, en pause, etc.) et leur activité dans les files d'attente. (Type: `AgentStatusData`)
 
-## 5. Fonctionnalités Détaillées
-
-### 5.1. Dashboard Principal (`main-dashboard.tsx`)
-
-C'est le hub central de l'application.
-
-- **Header** :
-    - Titre : "Call Center Analytics".
-    - Indicateur d'état du flux de données (LED : orange = en attente, vert = données reçues, rouge = inactif/erreur).
-    - Switch pour activer/désactiver le rafraîchissement des données.
-    - Switch pour activer/désactiver les panneaux d'IA.
-    - Sélecteur de date (Calendrier) pour filtrer les données de tous les composants par jour.
-    - Bouton pour ouvrir le Wallboard dans un nouvel onglet.
-    - Bouton pour ouvrir les paramètres avancés.
-
-- **Onglets** :
-    - **Dashboard** : La vue principale avec tous les widgets d'analyse.
-    - **Manual Data Input** : Permet de coller du JSON pour simuler des données et tester l'affichage.
-
-- **Panneaux d'Indicateurs de Performance (KPIs)** (`metrics-dashboard.tsx`) :
-    - Total des appels.
-    - Temps d'attente moyen.
-    - Niveau de service (appels répondus en <10s et <30s).
-    - Taux de réponse (pourcentage d'appels répondus vs abandonnés).
-
-- **Panneaux d'Intelligence Artificielle** (activables/désactivables) :
-    - **Daily Executive Summary** (`ai-summary.tsx`) : Utilise Genkit pour générer un résumé textuel des performances de la journée, mettant en évidence les tendances et les points clés.
-    - **Anomaly Detection** (`anomaly-detector.tsx`) : Utilise Genkit pour analyser les données et signaler les anomalies (pics d'appels abandonnés, temps d'attente inhabituels, etc.).
-
-- **Onglets d'Analyse des Appels** (`call-analytics-tabs.tsx`) :
-    - **Call Log** (`call-log.tsx`) : Tableau paginé et filtrable des données d'appel simplifiées (`CallData`). Permet de filtrer par statut.
-    - **Status Details** (`status-details-chart.tsx`) : Un Treemap (graphique en rectangles) montrant la répartition des appels par `status_detail`. Permet de "creuser" (drill-down) pour voir la répartition par agent pour un statut donné.
-    - **Agent Status** (`agent-status-log.tsx`) : Tableau paginé et filtrable des journaux d'activité des agents (`AgentStatusData`).
-    - **Advanced** (`advanced-call-log.tsx`) : Journal détaillé des appels avancés (`AdvancedCallData`), groupant visuellement les appels transférés sous leur appel parent.
-    - **World Map** (`world-map-chart.tsx`) : Un Treemap montrant la répartition des appels par pays (déduit du préfixe téléphonique). Permet de "creuser" pour voir les agents ayant traité les appels d'un pays spécifique.
-    - **Queue & IVR** (`queue-ivr-log.tsx`) : Tableau paginé et filtrable des événements IVR (`QueueIvrData`), avec des KPIs spécifiques (nombre d'interactions, etc.).
-
-### 5.2. Wallboard (`wallboard/page.tsx`)
-
-Conçu pour une vue d'ensemble en direct, avec un thème sombre à fort contraste.
-
-- **Onglets** :
-    - **Queues** (`queue-wallboard.tsx`) : Affiche une ligne par file d'attente avec des métriques clés en temps réel : agents connectés, appels en attente, temps d'attente max/moyen, appels reçus/manqués, niveau de service.
-    - **Agents** (`user-wallboard.tsx`) : Affiche une ligne par agent avec son statut actuel (ex: "Disponible", "En appel"), le temps passé dans cet état, et des statistiques de performance (appels répondus, sortants, manqués, temps de communication moyen/total).
-
-### 5.3. Paramètres (`advanced-settings-dialog.tsx`)
-
-Une boîte de dialogue modale pour la configuration et la gestion.
-
-- **URLs de Transmission** : Affiche la liste complète des URLs de l'API que l'utilisateur doit configurer dans son PBX pour envoyer les flux de données. Un bouton permet de copier chaque URL.
-- **Gestion des Données** : Contient une "Zone de Danger" avec un bouton pour vider toutes les données stockées (tous les fichiers `.json`), avec une boîte de dialogue de confirmation.
+4.  **Disponibilité des profils**
+    *   **Endpoint** : `/api/stream/profile-availability`
+    *   **Description** : Envoie des données sur le temps passé par chaque utilisateur dans différents profils de disponibilité (ex: "Available", "Lunch", "Meeting"). (Type: `ProfileAvailabilityData`)
