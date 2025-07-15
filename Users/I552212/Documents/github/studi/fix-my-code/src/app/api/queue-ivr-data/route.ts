@@ -4,24 +4,22 @@ import { type AdvancedCallData, type QueueIvrData } from "@/lib/types";
 import fs from "fs/promises";
 import path from "path";
 
-const advancedDataFilePath = path.join(process.cwd(), "Datas-json", "advanced-call-data.json");
+const dataDir = path.join(process.cwd(), "Datas-json");
+const advancedDataFilePath = path.join(dataDir, "advanced-call-data.json");
 
 // ============== Helper Functions for Reading Data ==============
 
 async function readAdvancedData(): Promise<AdvancedCallData[]> {
   try {
+    // Ensure the directory exists before trying to access the file
+    await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(advancedDataFilePath, "utf8");
     return JSON.parse(fileContent);
   } catch (error: any) {
     if (error.code === 'ENOENT') {
-       // If the file doesn't exist, create the directory and the file.
-      try {
-        await fs.mkdir(path.dirname(advancedDataFilePath), { recursive: true });
-        await fs.writeFile(advancedDataFilePath, "[]", "utf8");
-      } catch (mkdirError) {
-        console.error("Error creating data file directory:", mkdirError);
-      }
-      return [];
+      // If the file doesn't exist, create it with an empty array.
+      await fs.writeFile(advancedDataFilePath, "[]", "utf8");
+      return []; 
     }
     console.error("Error reading advanced call data file:", error);
     return [];
